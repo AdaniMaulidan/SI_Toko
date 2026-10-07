@@ -165,11 +165,6 @@ function isActiveMenu($route, $current) {
             <div>Daftar Supplier</div>
           </a>
         </li>
-        <li class="menu-item {{ $currentRoute === 'suppliers.create' ? 'active' : '' }}">
-          <a href="{{ route('suppliers.create') }}" class="menu-link">
-            <div>Tambah Supplier</div>
-          </a>
-        </li>
       </ul>
     </li>
 
@@ -292,6 +287,13 @@ function isActiveMenu($route, $current) {
       <a href="{{ route('backup.index') }}" class="menu-link">
         <i class="menu-icon icon-base bx bx-cloud-upload"></i>
         <div>Backup & Restore</div>
+      </a>
+    </li>
+
+    <li class="menu-item {{ isActiveMenu('import_export', $currentRoute) ? 'active' : '' }}">
+      <a href="{{ route('import_export.index') }}" class="menu-link">
+        <i class="menu-icon icon-base bx bx-export"></i>
+        <div>Import & Export</div>
       </a>
     </li>
 

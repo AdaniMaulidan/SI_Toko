@@ -66,7 +66,6 @@ Route::middleware([])->group(function () {
     // Supplier
     Route::prefix('suppliers')->name('suppliers.')->group(function () {
         Route::get('/',       fn() => view('suppliers.index'))->name('index');
-        Route::get('/create', fn() => view('suppliers.create'))->name('create');
     });
 
     // Pelanggan & Hutang
@@ -80,7 +79,7 @@ Route::middleware([])->group(function () {
         Route::get('/', fn() => view('expenses.index'))->name('index');
     });
 
-    // Keuangan
+    // Keuangan / Kas
     Route::prefix('finance')->name('finance.')->group(function () {
         Route::get('/', fn() => view('finance.index'))->name('index');
     });
@@ -105,9 +104,14 @@ Route::middleware([])->group(function () {
         Route::get('/', fn() => view('settings.index'))->name('index');
     });
 
-    // Backup
+    // Backup & Restore
     Route::prefix('backup')->name('backup.')->group(function () {
         Route::get('/', fn() => view('backup.index'))->name('index');
+    });
+
+    // Import & Export
+    Route::prefix('import-export')->name('import_export.')->group(function () {
+        Route::get('/', fn() => view('import_export.index'))->name('index');
     });
 
     // Audit / Aktivitas
