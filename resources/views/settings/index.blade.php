@@ -52,7 +52,7 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label" for="nama_toko">Nama Toko / Bisnis</label>
-                                    <input type="text" id="nama_toko" name="nama_toko" class="form-control" value="SI KASIR TOKO MAJU">
+                                    <input type="text" id="nama_toko" name="nama_toko" class="form-control" value="SI TOKO MAJU">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label" for="pemilik">Nama Pemilik (Owner)</label>

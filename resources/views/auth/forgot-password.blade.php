@@ -17,7 +17,7 @@
           <div class="app-brand justify-content-center mb-6">
             <a href="{{ url('/') }}" class="app-brand-link gap-2">
               <span class="app-brand-logo demo">@include('_partials.macros')</span>
-              <span class="app-brand-text demo text-heading fw-bold">SI Kasir</span>
+              <span class="app-brand-text demo text-heading fw-bold">SI Toko</span>
             </a>
           </div>
           <!-- /Logo -->

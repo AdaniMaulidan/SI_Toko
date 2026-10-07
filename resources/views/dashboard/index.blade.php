@@ -8,7 +8,7 @@
 <div class="row mb-4">
   <div class="col-12">
     <h4 class="fw-bold mb-1">Dashboard</h4>
-    <p class="text-muted mb-0">Selamat datang di SI Kasir 👋</p>
+    <p class="text-muted mb-0">Selamat datang di SI Toko 👋</p>
   </div>
 </div>
 

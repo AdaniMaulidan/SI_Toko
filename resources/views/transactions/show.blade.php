@@ -201,7 +201,7 @@
                     
                     <!-- Header -->
                     <div class="text-center mb-3">
-                        <h4 class="fw-bold mb-1" style="font-size: 18px; color: #000;">SI KASIR TOKO</h4>
+                        <h4 class="fw-bold mb-1" style="font-size: 18px; color: #000;">SI TOKO</h4>
                         <div style="font-size: 12px; line-height: 1.2;">
                             Jl. Contoh Alamat No. 123<br>
                             Kecamatan, Kota<br>

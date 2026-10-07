@@ -4,7 +4,7 @@
     <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
       <div class="text-body">
         © <script>document.write(new Date().getFullYear())</script>
-        <strong>SI Kasir</strong> — Sistem Informasi Toko
+        <strong>SI Toko</strong> — Sistem Informasi Toko
       </div>
       <div class="d-none d-lg-inline-block">
         <span class="text-muted small">v1.0.0</span>

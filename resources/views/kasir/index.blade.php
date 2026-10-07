@@ -210,7 +210,7 @@
             </div>
             <div class="modal-body pt-1" id="receipt-print">
                 <div class="text-center mb-3">
-                    <h5 class="fw-bold mb-0">SI KASIR TOKO</h5>
+                    <h5 class="fw-bold mb-0">SI TOKO</h5>
                     <small>Jl. Contoh Alamat No. 123, Kota</small><br>
                     <small>Telp: 0812-3456-7890</small>
                 </div>

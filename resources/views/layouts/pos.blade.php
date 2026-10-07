@@ -1,5 +1,5 @@
 @php
-$appName = config('app.name', 'SI Kasir');
+$appName = config('app.name', 'SI Toko');
 @endphp
 <!DOCTYPE html>
 <html

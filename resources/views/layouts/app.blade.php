@@ -1,10 +1,10 @@
 @php
 /*
 |--------------------------------------------------------------------------
-| SI Kasir - Toko App Config
+| SI Toko - Toko App Config
 |--------------------------------------------------------------------------
 */
-$appName    = config('app.name', 'SI Kasir');
+$appName    = config('app.name', 'SI Toko');
 $appVersion = '1.0.0';
 @endphp
 <!DOCTYPE html>
@@ -25,7 +25,7 @@ $appVersion = '1.0.0';
   <meta name="csrf-token" content="{{ csrf_token() }}" />
 
   <title>@yield('title', 'Dashboard') | {{ $appName }}</title>
-  <meta name="description" content="Sistem Informasi Kasir Toko" />
+  <meta name="description" content="Sistem Informasi Toko" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
