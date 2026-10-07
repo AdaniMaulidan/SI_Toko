@@ -69,14 +69,10 @@ Route::middleware([])->group(function () {
         Route::get('/create', fn() => view('suppliers.create'))->name('create');
     });
 
-    // Pelanggan
+    // Pelanggan & Hutang
     Route::prefix('customers')->name('customers.')->group(function () {
         Route::get('/', fn() => view('customers.index'))->name('index');
-    });
-
-    // Hutang
-    Route::prefix('debts')->name('debts.')->group(function () {
-        Route::get('/', fn() => view('debts.index'))->name('index');
+        Route::get('/debt', fn() => view('customers.debt'))->name('debt');
     });
 
     // Pengeluaran

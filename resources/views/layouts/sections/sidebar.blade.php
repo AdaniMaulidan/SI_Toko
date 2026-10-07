@@ -192,14 +192,14 @@ function isActiveMenu($route, $current) {
       </ul>
     </li>
 
-    <li class="menu-item {{ isActiveMenu('debts', $currentRoute) ? 'active open' : '' }}">
+    <li class="menu-item {{ $currentRoute === 'customers.debt' ? 'active open' : '' }}">
       <a href="javascript:void(0);" class="menu-link menu-toggle">
         <i class="menu-icon icon-base bx bx-credit-card"></i>
         <div>Hutang Pelanggan</div>
       </a>
       <ul class="menu-sub">
-        <li class="menu-item {{ $currentRoute === 'debts.index' ? 'active' : '' }}">
-          <a href="{{ route('debts.index') }}" class="menu-link">
+        <li class="menu-item {{ $currentRoute === 'customers.debt' ? 'active' : '' }}">
+          <a href="{{ route('customers.debt') }}" class="menu-link">
             <div>Daftar Hutang</div>
           </a>
         </li>
