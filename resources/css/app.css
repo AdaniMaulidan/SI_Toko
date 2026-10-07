@@ -1,9 +1,73 @@
-@import 'tailwindcss';
+/* SI Kasir - App Custom Styles */
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+/* Custom override untuk brand SI Kasir */
+.app-brand-text {
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* Sidebar active item indicator */
+.menu-vertical .menu-item.active > .menu-link {
+  font-weight: 600;
+}
+
+/* Notifikasi badge kecil */
+.badge-dot {
+  width: 8px !important;
+  height: 8px !important;
+  padding: 0 !important;
+  top: 2px !important;
+  right: 2px !important;
+}
+
+/* Card stat dashboard */
+.stat-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* POS / Kasir layout */
+.pos-wrapper {
+  height: calc(100vh - 70px);
+  display: flex;
+  gap: 1rem;
+}
+
+.pos-left {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pos-right {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-cart-items {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+/* Struk / Receipt */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-print, #receipt-print * {
+    visibility: visible;
+  }
+  #receipt-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+  }
 }
