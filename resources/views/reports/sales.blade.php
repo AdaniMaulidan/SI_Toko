@@ -116,7 +116,7 @@
         <h5 class="card-title mb-0">Rincian Laporan Penjualan (Okt 2026)</h5>
     </div>
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
+        <table class="table table-striped">
             <thead class="table-light">
                 <tr>
                     <th>Tanggal</th>

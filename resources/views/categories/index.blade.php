@@ -27,7 +27,7 @@
         </div>
 
         <div class="table-responsive text-nowrap border rounded">
-            <table class="table table-hover mb-0">
+            <table class="table table-striped mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>No</th>
@@ -62,12 +62,13 @@
                             @endif
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-icon btn-text-secondary" data-bs-toggle="modal" data-bs-target="#editKategoriModal" onclick="populateEditModal('{{ $cat['name'] }}', '{{ $cat['status'] }}')">
-                                <i class="icon-base bx bx-edit-alt"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-icon btn-text-danger" data-bs-toggle="modal" data-bs-target="#hapusKategoriModal">
-                                <i class="icon-base bx bx-trash"></i>
-                            </button>
+                            <div class="dropdown">
+                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editKategoriModal" onclick="populateEditModal('{{ $cat['name'] }}', '{{ $cat['status'] }}')"><i class="icon-base bx bx-edit-alt me-1"></i> Edit</a>
+                                    <a class="dropdown-item text-danger" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#hapusKategoriModal"><i class="icon-base bx bx-trash me-1"></i> Hapus</a>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     @endforeach

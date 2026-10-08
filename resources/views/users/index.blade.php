@@ -17,7 +17,7 @@
         <h5 class="card-title mb-0">Daftar Akun Karyawan (Kasir & Admin)</h5>
     </div>
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
+        <table class="table table-striped">
             <thead class="table-light">
                 <tr>
                     <th>Pengguna</th>
@@ -61,17 +61,16 @@
                     </td>
                     <td><small class="text-muted">{{ $u['last'] }}</small></td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-icon btn-text-secondary" title="Edit Akun" data-bs-toggle="modal" data-bs-target="#editUserModal" onclick="populateEditUserModal('{{ $u['name'] }}', '{{ $u['user'] }}', '{{ $u['role'] }}', '{{ $u['status'] }}')">
-                            <i class="icon-base bx bx-edit-alt text-info"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-icon btn-text-secondary" title="Ganti Password" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
-                            <i class="icon-base bx bx-key text-warning"></i>
-                        </button>
-                        @if($u['user'] != 'admin')
-                        <button type="button" class="btn btn-sm btn-icon btn-text-secondary" title="Hapus Akun">
-                            <i class="icon-base bx bx-trash text-danger"></i>
-                        </button>
-                        @endif
+                        <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editUserModal" onclick="populateEditUserModal('{{ $u['name'] }}', '{{ $u['user'] }}', '{{ $u['role'] }}', '{{ $u['status'] }}')"><i class="icon-base bx bx-edit-alt me-1"></i> Edit</a>
+                                <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#resetPasswordModal"><i class="icon-base bx bx-key me-1"></i> Ganti Password</a>
+                                @if($u['user'] != 'admin')
+                                <a class="dropdown-item text-danger" href="javascript:void(0);"><i class="icon-base bx bx-trash me-1"></i> Hapus</a>
+                                @endif
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 @endforeach

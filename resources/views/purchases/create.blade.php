@@ -53,7 +53,7 @@
                     </button>
                 </div>
                 <div class="table-responsive text-nowrap">
-                    <table class="table table-bordered mb-0" id="purchase-table">
+                    <table class="table table-striped table-bordered mb-0" id="purchase-table">
                         <thead class="table-light">
                             <tr>
                                 <th>Produk</th>

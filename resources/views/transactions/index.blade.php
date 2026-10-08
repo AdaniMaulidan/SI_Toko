@@ -65,7 +65,7 @@
     </div>
     
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>No. Transaksi</th>
@@ -114,12 +114,13 @@
                         @endif
                     </td>
                     <td>
-                        <a href="{{ route('transactions.show', 1) }}" class="btn btn-sm btn-icon btn-text-secondary" title="Detail">
-                            <i class="icon-base bx bx-show text-primary"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-icon btn-text-secondary" title="Cetak Struk" onclick="window.open('{{ route('transactions.show', 1) }}?print=true', '_blank')">
-                            <i class="icon-base bx bx-printer text-info"></i>
-                        </button>
+                        <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{{ route('transactions.show', 1) }}"><i class="icon-base bx bx-show me-1"></i> Detail</a>
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="window.open('{{ route('transactions.show', 1) }}?print=true', '_blank')"><i class="icon-base bx bx-printer me-1"></i> Cetak Struk</a>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 @endforeach

@@ -87,7 +87,7 @@
         <h5 class="card-title mb-0">Valuasi & Status Stok Fisik</h5>
     </div>
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
+        <table class="table table-striped">
             <thead class="table-light">
                 <tr>
                     <th>Kode Barang</th>

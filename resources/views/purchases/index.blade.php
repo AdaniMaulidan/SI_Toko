@@ -60,7 +60,7 @@
     </div>
     
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>No. PO</th>
@@ -104,14 +104,15 @@
                         @endif
                     </td>
                     <td>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-icon btn-text-secondary" title="Detail Pembelian">
-                            <i class="icon-base bx bx-show text-primary"></i>
-                        </a>
-                        @if($po['status'] != 'Lunas')
-                        <button type="button" class="btn btn-sm btn-icon btn-text-success" title="Bayar Hutang">
-                            <i class="icon-base bx bx-money"></i>
-                        </button>
-                        @endif
+                        <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="javascript:void(0);"><i class="icon-base bx bx-show me-1"></i> Detail Pembelian</a>
+                                @if($po['status'] != 'Lunas')
+                                <a class="dropdown-item text-success" href="javascript:void(0);"><i class="icon-base bx bx-money me-1"></i> Bayar Hutang</a>
+                                @endif
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 @endforeach

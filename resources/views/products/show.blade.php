@@ -108,7 +108,7 @@
         <div class="card">
             <h5 class="card-header border-bottom">Riwayat Stok Terakhir</h5>
             <div class="table-responsive text-nowrap">
-                <table class="table table-hover mb-0">
+                <table class="table table-striped mb-0">
                     <thead>
                         <tr>
                             <th>Tanggal</th>

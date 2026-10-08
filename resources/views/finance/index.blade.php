@@ -74,7 +74,7 @@
         </div>
 
         <div class="table-responsive text-nowrap border rounded mt-3">
-            <table class="table table-hover mb-0">
+            <table class="table table-striped mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>Tanggal</th>

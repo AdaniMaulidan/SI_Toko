@@ -87,7 +87,7 @@
                 <h6 class="mb-3">Item Pembelian</h6>
                 
                 <div class="table-responsive text-nowrap">
-                    <table class="table table-bordered">
+                    <table class="table table-striped table-bordered">
                         <thead class="table-light">
                             <tr>
                                 <th>No</th>
