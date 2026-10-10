@@ -39,7 +39,7 @@ $appVersion = '1.0.0';
   @vite(['resources/assets/vendor/fonts/iconify/iconify.css'])
 
   <!-- Core CSS -->
-  @vite(['resources/assets/vendor/scss/core.scss'])
+  @vite(['resources/assets/vendor/scss/core.scss', 'resources/assets/vendor/scss/theme-default.scss', 'resources/assets/css/demo.css'])
 
   <!-- Vendor Styles -->
   @vite(['resources/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.scss'])
