@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -99,9 +100,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cash',      fn() => view('reports.cash'))->name('cash');
     });
 
-    // Manajemen Pengguna
-    Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', fn() => view('users.index'))->name('index');
+    // Manajemen Pengguna (Akses: Administrator / Owner)
+    Route::prefix('users')->name('users.')->middleware(['role:admin'])->group(function () {
+        Route::get('/',                  [UserController::class, 'index'])->name('index');
+        Route::post('/',                 [UserController::class, 'store'])->name('store');
+        Route::put('/{user}',            [UserController::class, 'update'])->name('update');
+        Route::put('/{user}/password',   [UserController::class, 'updatePassword'])->name('update-password');
+        Route::patch('/{user}/toggle',   [UserController::class, 'toggleStatus'])->name('toggle');
+        Route::delete('/{user}',         [UserController::class, 'destroy'])->name('destroy');
     });
 
     // Pengaturan
