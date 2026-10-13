@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 
 $currentRoute = Route::currentRouteName();
+$user = auth()->user();
 
 // Helper: cek apakah route saat ini match dengan prefix
 function isActiveMenu($route, $current) {
@@ -47,7 +48,8 @@ function isActiveMenu($route, $current) {
       </a>
     </li>
 
-    {{-- ===================== KASIR ===================== --}}
+    {{-- ===================== TRANSAKSI ===================== --}}
+    @if($user && ($user->isAdmin() || $user->isCashier()))
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Transaksi</span>
     </li>
@@ -72,8 +74,10 @@ function isActiveMenu($route, $current) {
         </li>
       </ul>
     </li>
+    @endif
 
     {{-- ===================== PRODUK ===================== --}}
+    @if($user && ($user->isAdmin() || $user->isStaff()))
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Produk</span>
     </li>
@@ -99,7 +103,7 @@ function isActiveMenu($route, $current) {
 
     <li class="menu-item {{ isActiveMenu('categories', $currentRoute) ? 'active' : '' }}">
       <a href="{{ route('categories.index') }}" class="menu-link">
-        <i class="menu-icon icon-base bx bx-category"></i>
+        <i class="menu-icon icon-base bx bx-grid-alt"></i>
         <div>Kategori</div>
       </a>
     </li>
@@ -111,7 +115,7 @@ function isActiveMenu($route, $current) {
       </a>
     </li>
 
-    {{-- ===================== STOK ===================== --}}
+    {{-- ===================== STOK & PEMBELIAN ===================== --}}
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Stok & Pembelian</span>
     </li>
@@ -167,8 +171,10 @@ function isActiveMenu($route, $current) {
         </li>
       </ul>
     </li>
+    @endif
 
     {{-- ===================== PELANGGAN ===================== --}}
+    @if($user && ($user->isAdmin() || $user->isCashier()))
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Pelanggan</span>
     </li>
@@ -200,8 +206,10 @@ function isActiveMenu($route, $current) {
         </li>
       </ul>
     </li>
+    @endif
 
     {{-- ===================== KEUANGAN ===================== --}}
+    @if($user && $user->isAdmin())
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Keuangan</span>
     </li>
@@ -303,6 +311,7 @@ function isActiveMenu($route, $current) {
         <div>Riwayat Aktivitas</div>
       </a>
     </li>
+    @endif
 
   </ul>
 </aside>

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -9,16 +10,20 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ── Authentication ──────────────────────────────────────────────────────
-Route::prefix('auth')->name('auth.')->group(function () {
-    Route::get('/login',           fn() => view('auth.login'))->name('login');
-    Route::post('/login',          fn() => redirect()->route('dashboard'))->name('login.submit');
-    Route::get('/forgot-password', fn() => view('auth.forgot-password'))->name('forgot-password');
-    Route::post('/forgot-password', fn() => back()->with('status', 'Link reset password telah dikirim ke email Anda.'))->name('forgot-password.submit');
-    Route::post('/logout',         fn() => redirect()->route('auth.login'))->name('logout');
+Route::middleware('guest')->group(function () {
+    Route::get('/login',                 [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login',                [AuthController::class, 'login'])->name('login.submit');
+    Route::get('/auth/login',            fn() => redirect()->route('login'))->name('auth.login');
+    Route::post('/auth/login',           [AuthController::class, 'login'])->name('auth.login.submit');
+    Route::get('/auth/forgot-password',  fn() => view('auth.forgot-password'))->name('auth.forgot-password');
+    Route::post('/auth/forgot-password', fn() => back()->with('status', 'Link reset password telah dikirim ke email Anda.'))->name('auth.forgot-password.submit');
 });
 
-// ── Main App (akan diberi middleware auth nanti) ─────────────────────────
-Route::middleware([])->group(function () {
+Route::post('/logout',      [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout')->middleware('auth');
+
+// ── Main App (Protected with auth middleware) ─────────────────────────
+Route::middleware(['auth'])->group(function () {
 
     // Dashboard
     Route::get('/', fn() => redirect()->route('dashboard'));
@@ -100,12 +105,12 @@ Route::middleware([])->group(function () {
     });
 
     // Pengaturan
-    Route::prefix('settings')->name('settings.')->group(function () {
+    Route::prefix('settings')->name('settings.')->middleware(['role:admin'])->group(function () {
         Route::get('/', fn() => view('settings.index'))->name('index');
     });
 
     // Backup & Restore
-    Route::prefix('backup')->name('backup.')->group(function () {
+    Route::prefix('backup')->name('backup.')->middleware(['role:admin'])->group(function () {
         Route::get('/', fn() => view('backup.index'))->name('index');
     });
 
