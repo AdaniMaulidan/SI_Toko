@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 
@@ -82,9 +83,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', fn() => view('purchases.create'))->name('create');
     });
 
-    // Supplier
-    Route::prefix('suppliers')->name('suppliers.')->group(function () {
-        Route::get('/',       fn() => view('suppliers.index'))->name('index');
+    // Supplier (Akses: Administrator & Gudang/Staf)
+    Route::prefix('suppliers')->name('suppliers.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',                 [SupplierController::class, 'index'])->name('index');
+        Route::post('/',                [SupplierController::class, 'store'])->name('store');
+        Route::put('/{supplier}',       [SupplierController::class, 'update'])->name('update');
+        Route::delete('/{supplier}',    [SupplierController::class, 'destroy'])->name('destroy');
     });
 
     // Pelanggan & Hutang (Akses: Administrator, Kasir, Staf)
