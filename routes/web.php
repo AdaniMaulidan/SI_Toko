@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
@@ -86,10 +87,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/',       fn() => view('suppliers.index'))->name('index');
     });
 
-    // Pelanggan & Hutang
-    Route::prefix('customers')->name('customers.')->group(function () {
-        Route::get('/', fn() => view('customers.index'))->name('index');
-        Route::get('/debt', fn() => view('customers.debt'))->name('debt');
+    // Pelanggan & Hutang (Akses: Administrator, Kasir, Staf)
+    Route::prefix('customers')->name('customers.')->middleware(['role:admin,cashier,staff'])->group(function () {
+        Route::get('/',                 [CustomerController::class, 'index'])->name('index');
+        Route::post('/',                [CustomerController::class, 'store'])->name('store');
+        Route::put('/{customer}',       [CustomerController::class, 'update'])->name('update');
+        Route::delete('/{customer}',    [CustomerController::class, 'destroy'])->name('destroy');
+        Route::get('/debt',             [CustomerController::class, 'debt'])->name('debt');
+        Route::post('/debt/{debt}/pay', [CustomerController::class, 'payDebt'])->name('debt.pay');
     });
 
     // Pengeluaran
