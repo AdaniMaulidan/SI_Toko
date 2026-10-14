@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UnitController;
@@ -86,10 +87,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/adjustment', fn() => view('stock.adjustment'))->name('adjustment');
     });
 
-    // Pembelian
-    Route::prefix('purchases')->name('purchases.')->group(function () {
-        Route::get('/',       fn() => view('purchases.index'))->name('index');
-        Route::get('/create', fn() => view('purchases.create'))->name('create');
+    // Pembelian / Kulakan (Akses: Administrator & Gudang/Staf - FASE 5)
+    Route::prefix('purchases')->name('purchases.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',        [PurchaseController::class, 'index'])->name('index');
+        Route::get('/create',  [PurchaseController::class, 'create'])->name('create');
+        Route::post('/',       [PurchaseController::class, 'store'])->name('store');
     });
 
     // Supplier (Akses: Administrator & Gudang/Staf)
