@@ -112,8 +112,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/',                [CustomerController::class, 'store'])->name('store');
         Route::put('/{customer}',       [CustomerController::class, 'update'])->name('update');
         Route::delete('/{customer}',    [CustomerController::class, 'destroy'])->name('destroy');
-        Route::get('/debt',             [CustomerController::class, 'debt'])->name('debt');
-        Route::post('/debt/{debt}/pay', [CustomerController::class, 'payDebt'])->name('debt.pay');
+        Route::get('/debt',                                [CustomerController::class, 'debt'])->name('debt');
+        Route::post('/debt/{debt}/pay',                    [CustomerController::class, 'payDebt'])->name('debt.pay');
+        Route::get('/debt/payments/{payment}/receipt',     [CustomerController::class, 'printPaymentReceipt'])->name('debt.receipt');
+        Route::get('/debt/payments/{payment}/receipt/pdf', [CustomerController::class, 'downloadPaymentReceiptPdf'])->name('debt.receipt.pdf');
     });
 
     // Pengeluaran

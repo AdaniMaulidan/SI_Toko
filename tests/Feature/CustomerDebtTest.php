@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\CashFlow;
 use App\Models\Customer;
 use App\Models\CustomerDebt;
+use App\Models\DebtPayment;
 use App\Models\Sale;
+use App\Models\StoreSetting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -291,5 +294,165 @@ class CustomerDebtTest extends TestCase
         $this->assertTrue($debtsCust->contains('id', $debtB->id));
         $this->assertFalse($debtsCust->contains('id', $debtA->id));
     }
-}
 
+    /**
+     * Test cicilan pembayaran hutang: kurangi sisa hutang, catat log pembayaran, dan catat uang masuk kas toko (FASE 6.2)
+     */
+    public function test_can_pay_debt_installment_and_record_cashflow(): void
+    {
+        $debt = CustomerDebt::create([
+            'sale_id'        => $this->saleA->id,
+            'customer_id'    => $this->customerA->id,
+            'total_debt'     => 150000,
+            'remaining_debt' => 150000,
+            'due_date'       => Carbon::today()->addDays(7),
+            'status'         => 'unpaid',
+        ]);
+
+        $this->customerA->update(['total_debt' => 150000]);
+
+        // Bayar cicilan sebesar Rp 50.000
+        $response = $this->actingAs($this->cashier)->post(route('customers.debt.pay', $debt->id), [
+            'amount'         => 50000,
+            'payment_date'   => Carbon::today()->toDateString(),
+            'payment_method' => 'cash',
+            'note'           => 'Cicilan pertama',
+        ]);
+
+        $response->assertRedirect(route('customers.debt'));
+        $response->assertSessionHas('success');
+        $response->assertSessionHas('last_payment_id');
+
+        // 1. Verifikasi CustomerDebt sisa hutang berkurang & status partial
+        $debt->refresh();
+        $this->assertEquals(100000, $debt->remaining_debt);
+        $this->assertEquals('partial', $debt->status);
+
+        // 2. Verifikasi Customer master total_debt berkurang
+        $this->customerA->refresh();
+        $this->assertEquals(100000, $this->customerA->total_debt);
+
+        // 3. Verifikasi log DebtPayment tercatat
+        $payment = DebtPayment::where('customer_debt_id', $debt->id)->first();
+        $this->assertNotNull($payment);
+        $this->assertEquals(50000, $payment->amount);
+        $this->assertEquals('cash', $payment->payment_method);
+        $this->assertEquals('Cicilan pertama', $payment->note);
+        $this->assertEquals($this->cashier->id, $payment->user_id);
+
+        // 4. Verifikasi uang masuk kas toko (CashFlow)
+        $cashflow = CashFlow::where('reference_type', 'debt_payment')
+                            ->where('reference_id', $payment->id)
+                            ->first();
+        $this->assertNotNull($cashflow);
+        $this->assertEquals('in', $cashflow->type);
+        $this->assertEquals('Pelunasan Hutang', $cashflow->category);
+        $this->assertEquals(50000, $cashflow->amount);
+
+        // 5. Verifikasi Sale paid_amount bertambah
+        $this->saleA->refresh();
+        $this->assertEquals(100000, $this->saleA->paid_amount); // 50k saat checkout + 50k cicilan
+    }
+
+    /**
+     * Test pelunasan penuh hutang: status menjadi paid dan status transaksi sale menjadi paid (FASE 6.2)
+     */
+    public function test_can_payoff_full_debt(): void
+    {
+        $debt = CustomerDebt::create([
+            'sale_id'        => $this->saleA->id,
+            'customer_id'    => $this->customerA->id,
+            'total_debt'     => 150000,
+            'remaining_debt' => 150000,
+            'due_date'       => Carbon::today()->addDays(7),
+            'status'         => 'unpaid',
+        ]);
+
+        $this->customerA->update(['total_debt' => 150000]);
+
+        // Bayar lunas 150.000
+        $response = $this->actingAs($this->admin)->post(route('customers.debt.pay', $debt->id), [
+            'amount'         => 150000,
+            'payment_date'   => Carbon::today()->toDateString(),
+            'payment_method' => 'transfer',
+            'note'           => 'Pelunasan lunas via Transfer BCA',
+        ]);
+
+        $response->assertRedirect(route('customers.debt'));
+
+        $debt->refresh();
+        $this->assertEquals(0, $debt->remaining_debt);
+        $this->assertEquals('paid', $debt->status);
+
+        $this->customerA->refresh();
+        $this->assertEquals(0, $this->customerA->total_debt);
+
+        $this->saleA->refresh();
+        $this->assertEquals('paid', $this->saleA->payment_status);
+        $this->assertEquals(200000, $this->saleA->paid_amount);
+    }
+
+    /**
+     * Test validasi gagal jika nominal bayar melebihi sisa hutang (FASE 6.2)
+     */
+    public function test_payment_fails_when_amount_exceeds_remaining_debt(): void
+    {
+        $debt = CustomerDebt::create([
+            'sale_id'        => $this->saleA->id,
+            'customer_id'    => $this->customerA->id,
+            'total_debt'     => 50000,
+            'remaining_debt' => 50000,
+            'due_date'       => Carbon::today()->addDays(7),
+            'status'         => 'unpaid',
+        ]);
+
+        $response = $this->actingAs($this->cashier)->post(route('customers.debt.pay', $debt->id), [
+            'amount'         => 60000, // melebihi 50.000
+            'payment_method' => 'cash',
+        ]);
+
+        $response->assertSessionHasErrors('amount');
+
+        // Pastikan tidak ada pembayaran dan cash flow yang tercatat
+        $this->assertDatabaseMissing('debt_payments', ['customer_debt_id' => $debt->id]);
+        $this->assertDatabaseMissing('cash_flows', ['reference_type' => 'debt_payment']);
+    }
+
+    /**
+     * Test cetak struk kuitansi pembayaran hutang dan download PDF (FASE 6.2)
+     */
+    public function test_can_print_and_download_payment_receipt(): void
+    {
+        $debt = CustomerDebt::create([
+            'sale_id'        => $this->saleA->id,
+            'customer_id'    => $this->customerA->id,
+            'total_debt'     => 100000,
+            'remaining_debt' => 50000,
+            'due_date'       => Carbon::today()->addDays(3),
+            'status'         => 'partial',
+        ]);
+
+        $payment = DebtPayment::create([
+            'customer_debt_id' => $debt->id,
+            'user_id'          => $this->cashier->id,
+            'payment_date'     => Carbon::today()->toDateString(),
+            'amount'           => 50000,
+            'payment_method'   => 'qris',
+            'note'             => 'Pembayaran cicilan QRIS',
+        ]);
+
+        // 1. Cetak Kuitansi Web / Thermal
+        $resReceipt = $this->actingAs($this->cashier)->get(route('customers.debt.receipt', $payment->id));
+        $resReceipt->assertOk();
+        $resReceipt->assertViewIs('customers.debt_receipt');
+        $resReceipt->assertSee('BUKTI PEMBAYARAN HUTANG');
+        $resReceipt->assertSee('Pelanggan Toko A');
+        $resReceipt->assertSee('50.000');
+        $resReceipt->assertSee('QRIS');
+
+        // 2. Download Kuitansi PDF
+        $resPdf = $this->actingAs($this->admin)->get(route('customers.debt.receipt.pdf', $payment->id));
+        $resPdf->assertOk();
+        $this->assertEquals('application/pdf', $resPdf->headers->get('content-type'));
+    }
+}

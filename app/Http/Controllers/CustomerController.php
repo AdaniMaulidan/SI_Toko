@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CashFlow;
 use App\Models\Customer;
 use App\Models\CustomerDebt;
 use App\Models\DebtPayment;
+use App\Models\StoreSetting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -224,12 +227,13 @@ class CustomerController extends Controller
     }
 
     /**
-     * Proses pembayaran cicilan / pelunasan hutang pelanggan
+     * Proses pembayaran cicilan / pelunasan hutang pelanggan (FASE 6.2)
      */
     public function payDebt(Request $request, CustomerDebt $debt)
     {
         $validated = $request->validate([
             'amount'         => ['required', 'numeric', 'min:1', 'max:' . $debt->remaining_debt],
+            'payment_date'   => ['nullable', 'date'],
             'payment_method' => ['required', 'string', 'in:cash,transfer,qris'],
             'note'           => ['nullable', 'string', 'max:255'],
         ], [
@@ -238,32 +242,104 @@ class CustomerController extends Controller
             'amount.max'      => 'Jumlah pembayaran tidak boleh melebihi sisa hutang (Rp ' . number_format($debt->remaining_debt, 0, ',', '.') . ').',
         ]);
 
-        DB::transaction(function () use ($validated, $debt) {
-            $amount = $validated['amount'];
+        $payment = DB::transaction(function () use ($validated, $debt) {
+            $amount = (float) $validated['amount'];
+            $paymentDate = $validated['payment_date'] ?? now()->toDateString();
 
-            // 1. Catat log pembayaran hutang
-            DebtPayment::create([
+            // 1. Catat log pembayaran hutang ke tabel debt_payments
+            $payment = DebtPayment::create([
                 'customer_debt_id' => $debt->id,
                 'user_id'          => auth()->id(),
-                'payment_date'     => now()->toDateString(),
+                'payment_date'     => $paymentDate,
                 'amount'           => $amount,
                 'payment_method'   => $validated['payment_method'],
                 'note'             => $validated['note'] ?? 'Pembayaran hutang',
             ]);
 
             // 2. Kurangi sisa hutang pada invoice ini
-            $debt->remaining_debt = max(0, $debt->remaining_debt - $amount);
+            $debt->remaining_debt = max(0, (float) $debt->remaining_debt - $amount);
             $debt->status = $debt->remaining_debt <= 0 ? 'paid' : 'partial';
             $debt->save();
 
             // 3. Kurangi total saldo hutang master pelanggan
             $customer = $debt->customer;
             if ($customer) {
-                $customer->total_debt = max(0, $customer->total_debt - $amount);
+                $customer->total_debt = max(0, (float) $customer->total_debt - $amount);
                 $customer->save();
             }
+
+            // 4. Update status pembayaran penjualan jika transaksi terhubung ke tabel sales
+            if ($debt->sale) {
+                $sale = $debt->sale;
+                $sale->paid_amount = (float) $sale->paid_amount + $amount;
+                if ($debt->remaining_debt <= 0) {
+                    $sale->payment_status = 'paid';
+                }
+                $sale->save();
+            }
+
+            // 5. Catat uang masuk kas toko ke tabel cash_flows
+            $methodLabel = match ($validated['payment_method']) {
+                'cash'     => 'Tunai',
+                'transfer' => 'Transfer Bank',
+                'qris'     => 'QRIS',
+                default    => strtoupper($validated['payment_method']),
+            };
+
+            $invoiceNo = $debt->sale ? $debt->sale->invoice_number : "TRX-{$debt->id}";
+            $customerName = $customer ? $customer->name : 'Pelanggan';
+
+            CashFlow::create([
+                'user_id'        => auth()->id(),
+                'type'           => 'in',
+                'category'       => 'Pelunasan Hutang',
+                'amount'         => $amount,
+                'reference_type' => 'debt_payment',
+                'reference_id'   => $payment->id,
+                'date'           => $paymentDate,
+                'notes'          => "Penerimaan cicilan/pelunasan hutang {$customerName} (Faktur: {$invoiceNo}, {$methodLabel})" . (!empty($validated['note']) ? " - {$validated['note']}" : ""),
+            ]);
+
+            return $payment;
         });
 
-        return redirect()->route('customers.debt')->with('success', 'Pembayaran hutang berhasil dicatat.');
+        return redirect()->route('customers.debt')
+            ->with('success', 'Pembayaran hutang sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . ' berhasil dicatat ke kas toko!')
+            ->with('last_payment_id', $payment->id);
+    }
+
+    /**
+     * Tampilkan dan cetak bukti pembayaran hutang (kuitansi thermal / print view) (FASE 6.2)
+     */
+    public function printPaymentReceipt(DebtPayment $payment)
+    {
+        $payment->load(['debt.customer', 'debt.sale', 'user']);
+        $debt = $payment->debt;
+        $customer = $debt->customer;
+        $setting = StoreSetting::getSettings();
+
+        return view('customers.debt_receipt', compact('payment', 'debt', 'customer', 'setting'));
+    }
+
+    /**
+     * Download kuitansi bukti pembayaran hutang dalam format PDF roll (FASE 6.2)
+     */
+    public function downloadPaymentReceiptPdf(DebtPayment $payment, Request $request)
+    {
+        $payment->load(['debt.customer', 'debt.sale', 'user']);
+        $debt = $payment->debt;
+        $customer = $debt->customer;
+        $setting = StoreSetting::getSettings();
+        $paper = $request->get('paper', '58');
+
+        // Ukuran kertas roll: 58mm = ~164.4pt, 80mm = ~226.8pt
+        $widthPt = ($paper === '80') ? 226.8 : 164.4;
+        $estimatedHeightPt = 360;
+
+        $pdf = Pdf::loadView('customers.debt_receipt_pdf', compact('payment', 'debt', 'customer', 'setting', 'paper'))
+                  ->setPaper([0, 0, $widthPt, $estimatedHeightPt], 'portrait');
+
+        $invoiceNum = $debt->sale ? $debt->sale->invoice_number : "TRX-{$debt->id}";
+        return $pdf->download("bukti-bayar-hutang-KW{$payment->id}-{$invoiceNum}.pdf");
     }
 }
