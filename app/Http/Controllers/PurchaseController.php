@@ -15,23 +15,23 @@ use Illuminate\Support\Facades\DB;
 class PurchaseController extends Controller
 {
     /**
-     * Tampilkan daftar riwayat pembelian produk
+     * Tampilkan daftar riwayat pembelian produk dengan statistik dan filter lengkap (FASE 5.2)
      */
     public function index(Request $request)
     {
-        $query = Purchase::with(['supplier', 'items.product', 'user']);
+        $query = Purchase::with(['supplier', 'items.product.unit', 'user']);
 
-        // Filter supplier
+        // 1. Filter Supplier
         if ($request->filled('supplier_id')) {
             $query->where('supplier_id', $request->supplier_id);
         }
 
-        // Filter status bayar
+        // 2. Filter Status Pembayaran (paid, partial, unpaid)
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
 
-        // Filter rentang tanggal
+        // 3. Filter Rentang Tanggal Pembelian
         if ($request->filled('start_date')) {
             $query->whereDate('purchase_date', '>=', $request->start_date);
         }
@@ -39,19 +39,31 @@ class PurchaseController extends Controller
             $query->whereDate('purchase_date', '<=', $request->end_date);
         }
 
-        // Filter no faktur / catatan
+        // 4. Filter Kata Kunci (Nomor Faktur / Catatan)
         if ($request->filled('q')) {
             $keyword = trim($request->q);
             $query->where(function ($q) use ($keyword) {
                 $q->where('invoice_number', 'like', "%{$keyword}%")
-                  ->orWhere('notes', 'like', "%{$keyword}%");
+                  ->orWhere('notes', 'like', "%{$keyword}%")
+                  ->orWhereHas('supplier', function ($sq) use ($keyword) {
+                      $sq->where('name', 'like', "%{$keyword}%")
+                         ->orWhere('phone', 'like', "%{$keyword}%");
+                  });
             });
         }
+
+        // Ringkasan Statistik Berdasarkan Filter Aktif
+        $stats = [
+            'total_purchases' => (float) (clone $query)->sum('total_amount'),
+            'total_invoices'  => (clone $query)->count(),
+            'total_paid'      => (float) (clone $query)->sum('paid_amount'),
+            'total_debt'      => (float) max(0, (clone $query)->sum('total_amount') - (clone $query)->sum('paid_amount')),
+        ];
 
         $purchases = $query->latest('purchase_date')->latest('id')->paginate(15)->withQueryString();
         $suppliers = Supplier::orderBy('name')->get();
 
-        return view('purchases.index', compact('purchases', 'suppliers'));
+        return view('purchases.index', compact('purchases', 'suppliers', 'stats'));
     }
 
     /**
@@ -202,5 +214,57 @@ class PurchaseController extends Controller
                 ->withInput()
                 ->with('error', 'Gagal menyimpan transaksi pembelian: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Tampilkan halaman detail lengkap faktur pembelian (FASE 5.2)
+     */
+    public function show($id)
+    {
+        $purchase = Purchase::with(['supplier', 'items.product.unit', 'items.product.category', 'user'])->findOrFail($id);
+
+        return view('purchases.show', compact('purchase'));
+    }
+
+    /**
+     * Endpoint API JSON untuk memuat data modal detail pembelian secara realtime (FASE 5.2)
+     */
+    public function detail($id)
+    {
+        $purchase = Purchase::with(['supplier', 'items.product.unit', 'user'])->findOrFail($id);
+
+        $remainingDebt = max(0, (float) ($purchase->total_amount - $purchase->paid_amount));
+
+        return response()->json([
+            'success'  => true,
+            'purchase' => [
+                'id'               => $purchase->id,
+                'invoice_number'   => $purchase->invoice_number,
+                'purchase_date'    => $purchase->purchase_date->format('d/m/Y'),
+                'created_at'       => $purchase->created_at->format('d/m/Y H:i'),
+                'creator_name'     => $purchase->user?->name ?? 'Staff Gudang',
+                'supplier_name'    => $purchase->supplier?->name ?? 'Supplier Umum / Tanpa Nama',
+                'supplier_contact' => $purchase->supplier?->contact_person ?? '-',
+                'supplier_phone'   => $purchase->supplier?->phone ?? '-',
+                'supplier_address' => $purchase->supplier?->address ?? '-',
+                'payment_status'   => $purchase->payment_status,
+                'total_amount'     => (float) $purchase->total_amount,
+                'paid_amount'      => (float) $purchase->paid_amount,
+                'remaining_debt'   => $remainingDebt,
+                'notes'            => $purchase->notes,
+                'items_count'      => $purchase->items->count(),
+                'total_qty'        => (int) $purchase->items->sum('quantity'),
+                'items'            => $purchase->items->map(function ($it) {
+                    return [
+                        'product_name' => $it->product?->name ?? 'Barang',
+                        'barcode'      => $it->product?->barcode ?? '-',
+                        'unit'         => $it->product?->unit?->symbol ?? 'Pcs',
+                        'cost_price'   => (float) $it->cost_price,
+                        'quantity'     => (int) $it->quantity,
+                        'subtotal'     => (float) $it->subtotal,
+                    ];
+                }),
+            ]
+        ]);
     }
 }

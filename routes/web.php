@@ -89,9 +89,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Pembelian / Kulakan (Akses: Administrator & Gudang/Staf - FASE 5)
     Route::prefix('purchases')->name('purchases.')->middleware(['role:admin,staff'])->group(function () {
-        Route::get('/',        [PurchaseController::class, 'index'])->name('index');
-        Route::get('/create',  [PurchaseController::class, 'create'])->name('create');
-        Route::post('/',       [PurchaseController::class, 'store'])->name('store');
+        Route::get('/',                 [PurchaseController::class, 'index'])->name('index');
+        Route::get('/create',           [PurchaseController::class, 'create'])->name('create');
+        Route::post('/',                [PurchaseController::class, 'store'])->name('store');
+        Route::get('/{purchase}',        [PurchaseController::class, 'show'])->name('show');
+        Route::get('/{purchase}/detail', [PurchaseController::class, 'detail'])->name('detail');
     });
 
     // Supplier (Akses: Administrator & Gudang/Staf)
