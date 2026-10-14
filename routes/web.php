@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 
 /*
@@ -52,9 +53,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', fn() => view('categories.index'))->name('index');
     });
 
-    // Satuan
-    Route::prefix('units')->name('units.')->group(function () {
-        Route::get('/', fn() => view('units.index'))->name('index');
+    // Satuan (Akses: Administrator & Gudang/Staf)
+    Route::prefix('units')->name('units.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',              [UnitController::class, 'index'])->name('index');
+        Route::post('/',             [UnitController::class, 'store'])->name('store');
+        Route::put('/{unit}',        [UnitController::class, 'update'])->name('update');
+        Route::delete('/{unit}',     [UnitController::class, 'destroy'])->name('destroy');
     });
 
     // Stok
