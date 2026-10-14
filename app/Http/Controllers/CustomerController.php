@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\CustomerDebt;
 use App\Models\DebtPayment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -116,28 +117,110 @@ class CustomerController extends Controller
     }
 
     /**
-     * Tampilkan data rincian piutang / hutang pelanggan yang belum lunas
+     * Tampilkan data rincian piutang / hutang pelanggan, filter status, dan monitoring jatuh tempo (FASE 6.1)
      */
     public function debt(Request $request)
     {
-        $query = CustomerDebt::with(['customer', 'sale'])->unpaid();
+        $query = CustomerDebt::with(['customer', 'sale.items.product', 'payments']);
 
+        // 1. Filter Status (unpaid, partial, paid, overdue, active, all)
+        $status = $request->get('status', 'active');
+        if ($status === 'unpaid') {
+            $query->where('status', 'unpaid');
+        } elseif ($status === 'partial') {
+            $query->where('status', 'partial');
+        } elseif ($status === 'paid') {
+            $query->where('status', 'paid');
+        } elseif ($status === 'overdue') {
+            $query->overdue();
+        } elseif ($status === 'all') {
+            // Tampilkan semua tanpa filter status
+        } else {
+            // Default: 'active' (belum lunas & dicicil sebagian)
+            $status = 'active';
+            $query->unpaid();
+        }
+
+        // 2. Filter Status Jatuh Tempo Khusus (due_status)
+        if ($request->filled('due_status')) {
+            $today = Carbon::today();
+            if ($request->due_status === 'overdue') {
+                $query->whereNotNull('due_date')->whereDate('due_date', '<', $today);
+            } elseif ($request->due_status === 'today') {
+                $query->whereNotNull('due_date')->whereDate('due_date', $today);
+            } elseif ($request->due_status === 'upcoming_3') {
+                $query->whereNotNull('due_date')->whereBetween('due_date', [$today, $today->copy()->addDays(3)]);
+            } elseif ($request->due_status === 'upcoming_7') {
+                $query->whereNotNull('due_date')->whereBetween('due_date', [$today, $today->copy()->addDays(7)]);
+            }
+        }
+
+        // 3. Filter Pelanggan Spesifik
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // 4. Filter Rentang Tanggal (Berdasarkan Tgl Jatuh Tempo atau Tgl Transaksi)
+        $dateType = $request->get('date_type', 'due_date');
+        $dateColumn = $dateType === 'created_at' ? 'created_at' : 'due_date';
+        if ($request->filled('start_date')) {
+            $query->whereDate($dateColumn, '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate($dateColumn, '<=', $request->end_date);
+        }
+
+        // 5. Pencarian Keyword
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->whereHas('customer', function ($cq) use ($search) {
                     $cq->where('name', 'like', "%{$search}%")
                        ->orWhere('phone', 'like', "%{$search}%");
                 })->orWhereHas('sale', function ($sq) use ($search) {
                     $sq->where('invoice_number', 'like', "%{$search}%");
-                });
+                })->orWhere('notes', 'like', "%{$search}%");
             });
         }
 
-        $debts = $query->latest()->paginate(15)->withQueryString();
-        $totalReceivable = CustomerDebt::unpaid()->sum('remaining_debt');
+        // 6. Pengurutan Data (Sorting)
+        $sort = $request->get('sort', 'latest');
+        if ($sort === 'due_date_asc') {
+            $query->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC');
+        } elseif ($sort === 'due_date_desc') {
+            $query->orderByDesc('due_date');
+        } elseif ($sort === 'remaining_desc') {
+            $query->orderByDesc('remaining_debt');
+        } elseif ($sort === 'remaining_asc') {
+            $query->orderBy('remaining_debt');
+        } else {
+            $query->latest('id');
+        }
 
-        return view('customers.debt', compact('debts', 'totalReceivable'));
+        $debts = $query->paginate(15)->withQueryString();
+
+        // Metrik Ringkasan (KPI Piutang Toko)
+        $stats = [
+            'total_receivable' => (float) CustomerDebt::unpaid()->sum('remaining_debt'),
+            'count_active'     => CustomerDebt::unpaid()->count(),
+            'total_overdue'    => (float) CustomerDebt::overdue()->sum('remaining_debt'),
+            'count_overdue'    => CustomerDebt::overdue()->count(),
+            'total_partial'    => (float) CustomerDebt::where('status', 'partial')->sum('remaining_debt'),
+            'count_partial'    => CustomerDebt::where('status', 'partial')->count(),
+            'count_unpaid'     => CustomerDebt::where('status', 'unpaid')->count(),
+            'total_paid'       => (float) CustomerDebt::paid()->sum('total_debt'),
+            'count_paid'       => CustomerDebt::paid()->count(),
+            'count_due_today'  => CustomerDebt::dueToday()->count(),
+            'count_due_soon'   => CustomerDebt::dueSoon(3)->count(),
+        ];
+
+        // Daftar Pelanggan untuk filter dropdown
+        $customers = Customer::orderBy('name')->get(['id', 'name', 'phone', 'total_debt']);
+
+        // Kompatibilitas variabel lama $totalReceivable
+        $totalReceivable = $stats['total_receivable'];
+
+        return view('customers.debt', compact('debts', 'stats', 'customers', 'status', 'totalReceivable'));
     }
 
     /**
