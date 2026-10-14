@@ -7,6 +7,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UnitController;
@@ -81,10 +82,11 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{unit}',     [UnitController::class, 'destroy'])->name('destroy');
     });
 
-    // Stok
-    Route::prefix('stock')->name('stock.')->group(function () {
-        Route::get('/',           fn() => view('stock.index'))->name('index');
-        Route::get('/adjustment', fn() => view('stock.adjustment'))->name('adjustment');
+    // Manajemen Stok & Penyesuaian (Akses: Administrator & Gudang/Staf - FASE 5.3)
+    Route::prefix('stock')->name('stock.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',            [StockController::class, 'index'])->name('index');
+        Route::get('/adjustment',  [StockController::class, 'adjustment'])->name('adjustment');
+        Route::post('/adjustment', [StockController::class, 'storeAdjustment'])->name('adjustment.store');
     });
 
     // Pembelian / Kulakan (Akses: Administrator & Gudang/Staf - FASE 5)
