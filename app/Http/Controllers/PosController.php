@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class PosController extends Controller
 {
@@ -112,5 +113,60 @@ class PosController extends Controller
             'success' => false,
             'message' => 'Kata kunci atau barcode wajib disediakan.'
         ], 400);
+    }
+
+    /**
+     * Validasi proses pembayaran checkout modal kasir (FASE 4.2)
+     */
+    public function checkout(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'payment_method'         => 'required|in:cash,qris,transfer,debt',
+            'customer_id'            => 'nullable|exists:customers,id',
+            'items'                  => 'required|array|min:1',
+            'items.*.product_id'     => 'required|exists:products,id',
+            'items.*.qty'            => 'required|integer|min:1',
+            'items.*.discount_type'  => 'nullable|in:rp,pct',
+            'items.*.discount_value' => 'nullable|numeric|min:0',
+            'global_discount_type'   => 'nullable|in:rp,pct',
+            'global_discount_value'  => 'nullable|numeric|min:0',
+            'paid_amount'            => 'required|numeric|min:0',
+            'due_date'               => 'nullable|date',
+            'notes'                  => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $paymentMethod = $request->payment_method;
+        $customerId    = $request->customer_id;
+        $dueDate       = $request->due_date;
+
+        // Validasi khusus metode Hutang (Hanya untuk pelanggan terdaftar & tanggal jatuh tempo valid)
+        if ($paymentMethod === 'debt') {
+            if (!$customerId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaksi hutang wajib memilih pelanggan terdaftar.'
+                ], 422);
+            }
+
+            if (!$dueDate || $dueDate < date('Y-m-d')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tanggal jatuh tempo hutang tidak valid atau sudah lewat.'
+                ], 422);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Validasi checkout modal berhasil.'
+        ]);
     }
 }

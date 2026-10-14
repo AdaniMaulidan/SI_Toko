@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin,cashier'])->group(function () {
         Route::get('/kasir',                 [PosController::class, 'index'])->name('kasir.index');
         Route::get('/kasir/search-products', [PosController::class, 'searchProducts'])->name('kasir.search');
+        Route::post('/kasir/checkout',       [PosController::class, 'checkout'])->name('kasir.checkout');
     });
 
     // Produk (Akses: Administrator & Gudang/Staf)
