@@ -9,6 +9,8 @@ use App\Models\CustomerDebt;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\StoreSetting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +20,7 @@ use Illuminate\Support\Facades\Validator;
 class PosController extends Controller
 {
     /**
-     * Tampilkan halaman Point of Sale (POS) Kasir (FASE 4.1)
+     * Tampilkan halaman Point of Sale (POS) Kasir
      */
     public function index()
     {
@@ -51,7 +53,7 @@ class PosController extends Controller
     }
 
     /**
-     * Endpoint API untuk scan barcode cepat atau autocomplete pencarian produk (FASE 4.1)
+     * Endpoint API untuk scan barcode cepat atau autocomplete pencarian produk
      */
     public function searchProducts(Request $request)
     {
@@ -390,4 +392,43 @@ class PosController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Tampilkan halaman cetak struk ramah thermal printer 58mm / 80mm (FASE 4.4)
+     */
+    public function printReceipt($id, Request $request)
+    {
+        $sale = Sale::with(['items.product', 'customer', 'user', 'debt'])->findOrFail($id);
+        $setting = StoreSetting::getSettings();
+        $paper = $request->get('paper', '58');
+        $autoprint = $request->boolean('autoprint', false);
+
+        return view('kasir.receipt', compact('sale', 'setting', 'paper', 'autoprint'));
+    }
+
+    /**
+     * Download struk dalam format PDF roll (FASE 4.4)
+     */
+    public function downloadReceiptPdf($id, Request $request)
+    {
+        $sale = Sale::with(['items.product', 'customer', 'user', 'debt'])->findOrFail($id);
+        $setting = StoreSetting::getSettings();
+        $paper = $request->get('paper', '58');
+
+        // Ukuran kertas PDF (dalam point pt, 1mm = 2.83465 pt)
+        // 58mm = ~164.4pt, 80mm = ~226.8pt
+        $widthPt = ($paper === '80') ? 226.8 : 164.4;
+
+        // Estimasi tinggi kertas roll secara dinamis agar pas tanpa sisa kertas kosong
+        $itemCount = $sale->items->count();
+        $hasDebt = ($sale->payment_method === 'debt' || $sale->debt);
+        $estimatedHeightPt = 240 + ($itemCount * 32) + ($hasDebt ? 55 : 0) + ($sale->discount > 0 ? 25 : 0);
+        $estimatedHeightPt = max(300, $estimatedHeightPt);
+
+        $pdf = Pdf::loadView('kasir.receipt_pdf', compact('sale', 'setting', 'paper'))
+                  ->setPaper([0, 0, $widthPt, $estimatedHeightPt], 'portrait');
+
+        return $pdf->download("struk-{$sale->invoice_number}.pdf");
+    }
 }
+

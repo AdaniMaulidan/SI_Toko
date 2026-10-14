@@ -42,6 +42,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kasir',                 [PosController::class, 'index'])->name('kasir.index');
         Route::get('/kasir/search-products', [PosController::class, 'searchProducts'])->name('kasir.search');
         Route::post('/kasir/checkout',       [PosController::class, 'checkout'])->name('kasir.checkout');
+        Route::get('/kasir/receipt/{sale}',      [PosController::class, 'printReceipt'])->name('kasir.receipt');
+        Route::get('/kasir/receipt/{sale}/pdf',  [PosController::class, 'downloadReceiptPdf'])->name('kasir.receipt.pdf');
     });
 
     // Produk (Akses: Administrator & Gudang/Staf)
