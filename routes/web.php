@@ -46,6 +46,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kasir/receipt/{sale}/pdf',  [PosController::class, 'downloadReceiptPdf'])->name('kasir.receipt.pdf');
     });
 
+    // Riwayat Transaksi (FASE 4.5)
+    Route::prefix('transactions')->name('transactions.')->group(function () {
+        Route::get('/',             [TransactionController::class, 'index'])->name('index');
+        Route::get('/{id}',         [TransactionController::class, 'show'])->name('show');
+        Route::get('/{id}/detail',  [TransactionController::class, 'detail'])->name('detail');
+    });
+
     // Produk (Akses: Administrator & Gudang/Staf)
     Route::prefix('products')->name('products.')->middleware(['role:admin,staff'])->group(function () {
         Route::get('/',                   [ProductController::class, 'index'])->name('index');

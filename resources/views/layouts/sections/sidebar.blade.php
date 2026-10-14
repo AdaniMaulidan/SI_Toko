@@ -5,14 +5,16 @@ $currentRoute = Route::currentRouteName();
 $user = auth()->user();
 
 // Helper: cek apakah route saat ini match dengan prefix
-function isActiveMenu($route, $current) {
-    if (is_array($route)) {
-        foreach ($route as $r) {
-            if (str_starts_with($current ?? '', $r)) return true;
+if (!function_exists('isActiveMenu')) {
+    function isActiveMenu($route, $current) {
+        if (is_array($route)) {
+            foreach ($route as $r) {
+                if (str_starts_with($current ?? '', $r)) return true;
+            }
+            return false;
         }
-        return false;
+        return str_starts_with($current ?? '', $route);
     }
-    return str_starts_with($current ?? '', $route);
 }
 @endphp
 
