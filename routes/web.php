@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 
@@ -35,13 +37,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', fn() => redirect()->route('dashboard'));
     Route::get('/dashboard', fn() => view('dashboard.index'))->name('dashboard');
 
-    // Kasir / POS
-    Route::get('/kasir', fn() => view('kasir.index'))->name('kasir.index');
-
-    // Riwayat Transaksi
-    Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/',       fn() => view('transactions.index'))->name('index');
-        Route::get('/{id}',   fn($id) => view('transactions.show', ['id' => $id]))->name('show');
+    // Kasir / POS (Akses: Administrator & Kasir)
+    Route::middleware(['role:admin,cashier'])->group(function () {
+        Route::get('/kasir',                 [PosController::class, 'index'])->name('kasir.index');
+        Route::get('/kasir/search-products', [PosController::class, 'searchProducts'])->name('kasir.search');
     });
 
     // Produk (Akses: Administrator & Gudang/Staf)
