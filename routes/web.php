@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 
@@ -41,12 +42,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}',   fn($id) => view('transactions.show', ['id' => $id]))->name('show');
     });
 
-    // Produk
-    Route::prefix('products')->name('products.')->group(function () {
-        Route::get('/',         fn() => view('products.index'))->name('index');
-        Route::get('/create',   fn() => view('products.create'))->name('create');
-        Route::get('/{id}/edit',fn($id) => view('products.edit', ['id' => $id]))->name('edit');
-        Route::get('/{id}',     fn($id) => view('products.show', ['id' => $id]))->name('show');
+    // Produk (Akses: Administrator & Gudang/Staf)
+    Route::prefix('products')->name('products.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',                   [ProductController::class, 'index'])->name('index');
+        Route::get('/create',             [ProductController::class, 'create'])->name('create');
+        Route::post('/',                  [ProductController::class, 'store'])->name('store');
+        Route::get('/{product}',          [ProductController::class, 'show'])->name('show');
+        Route::get('/{product}/edit',     [ProductController::class, 'edit'])->name('edit');
+        Route::put('/{product}',          [ProductController::class, 'update'])->name('update');
+        Route::delete('/{product}',       [ProductController::class, 'destroy'])->name('destroy');
     });
 
     // Kategori (Akses: Administrator & Gudang/Staf)
