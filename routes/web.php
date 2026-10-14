@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 
@@ -48,9 +49,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}',     fn($id) => view('products.show', ['id' => $id]))->name('show');
     });
 
-    // Kategori
-    Route::prefix('categories')->name('categories.')->group(function () {
-        Route::get('/', fn() => view('categories.index'))->name('index');
+    // Kategori (Akses: Administrator & Gudang/Staf)
+    Route::prefix('categories')->name('categories.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',                  [CategoryController::class, 'index'])->name('index');
+        Route::post('/',                 [CategoryController::class, 'store'])->name('store');
+        Route::put('/{category}',        [CategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}',     [CategoryController::class, 'destroy'])->name('destroy');
     });
 
     // Satuan (Akses: Administrator & Gudang/Staf)
