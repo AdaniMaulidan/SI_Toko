@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
@@ -194,9 +195,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/restore',              [BackupController::class, 'restore'])->name('restore');
     });
 
-    // Import & Export
-    Route::prefix('import-export')->name('import_export.')->group(function () {
-        Route::get('/', fn() => view('import_export.index'))->name('index');
+    // Import & Export Data Master (FASE 10.1 - Akses: Administrator & Staf)
+    Route::prefix('import-export')->name('import_export.')->middleware(['role:admin,staff'])->group(function () {
+        Route::get('/',         [ImportExportController::class, 'index'])->name('index');
+        Route::post('/export',  [ImportExportController::class, 'export'])->name('export');
+        Route::get('/template', [ImportExportController::class, 'downloadTemplate'])->name('template');
+        Route::post('/import',  [ImportExportController::class, 'import'])->name('import');
     });
 
     // Audit / Aktivitas
