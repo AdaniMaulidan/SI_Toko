@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PosController;
@@ -37,9 +38,9 @@ Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logou
 // ── Main App (Protected with auth middleware) ─────────────────────────
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard
+    // Dashboard (FASE 8.1)
     Route::get('/', fn() => redirect()->route('dashboard'));
-    Route::get('/dashboard', fn() => view('dashboard.index'))->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Kasir / POS (Akses: Administrator & Kasir)
     Route::middleware(['role:admin,cashier'])->group(function () {
