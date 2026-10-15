@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -183,9 +184,14 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/logo',      [SettingController::class, 'removeLogo'])->name('remove-logo');
     });
 
-    // Backup & Restore
+    // Backup & Restore Database (Akses: Administrator - FASE 9.2)
     Route::prefix('backup')->name('backup.')->middleware(['role:admin'])->group(function () {
-        Route::get('/', fn() => view('backup.index'))->name('index');
+        Route::get('/',                      [BackupController::class, 'index'])->name('index');
+        Route::get('/download',              [BackupController::class, 'download'])->name('download');
+        Route::post('/',                     [BackupController::class, 'store'])->name('store');
+        Route::get('/download/{filename}',   [BackupController::class, 'downloadFile'])->name('download-file');
+        Route::delete('/{filename}',         [BackupController::class, 'destroy'])->name('destroy');
+        Route::post('/restore',              [BackupController::class, 'restore'])->name('restore');
     });
 
     // Import & Export
