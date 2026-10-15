@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -50,6 +51,8 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            ActivityLog::record('login', "Pengguna {$user->name} berhasil login ke dalam sistem via IP " . $request->ip(), $user);
+
             // Redirect sesuai role jika kasir ingin langsung ke POS atau dashboard
             if ($user->isCashier()) {
                 return redirect()->intended(route('kasir.index'));
@@ -67,6 +70,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        if ($user) {
+            ActivityLog::record('logout', "Pengguna {$user->name} telah keluar dari sistem.", $user);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

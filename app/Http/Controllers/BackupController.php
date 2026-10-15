@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Services\DatabaseBackupService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -42,6 +43,8 @@ class BackupController extends Controller
         // Buat file backup di storage lokal agar tersimpan di riwayat juga
         $filePath = $this->backupService->createBackupFile($filename);
 
+        ActivityLog::record('backup', "Backup database manual diunduh ({$filename}).");
+
         return response()->download($filePath, $filename, [
             'Content-Type' => 'application/sql',
         ]);
@@ -54,6 +57,8 @@ class BackupController extends Controller
     {
         $filePath = $this->backupService->createBackupFile();
         $filename = basename($filePath);
+
+        ActivityLog::record('backup', "Snapshot backup database baru dibuat ({$filename}).");
 
         return redirect()->route('backup.index')->with('success', "Backup database berhasil dibuat: {$filename}");
     }
@@ -87,6 +92,8 @@ class BackupController extends Controller
             return redirect()->route('backup.index')->with('error', 'File backup tidak ditemukan atau gagal dihapus.');
         }
 
+        ActivityLog::record('delete', "File cadangan database ({$cleanFilename}) dihapus dari server.");
+
         return redirect()->route('backup.index')->with('success', "File backup {$cleanFilename} berhasil dihapus.");
     }
 
@@ -115,6 +122,8 @@ class BackupController extends Controller
                 $sqlContent = File::get($file->getRealPath());
                 $this->backupService->restoreFromSql($sqlContent);
 
+                ActivityLog::record('restore', "Database toko dipulihkan dari file backup unggahan ({$file->getClientOriginalName()}).");
+
                 return redirect()->route('backup.index')->with('success', 'Database toko berhasil dipulihkan (restore) dari file yang diunggah.');
             } catch (\Throwable $e) {
                 return redirect()->route('backup.index')->with('error', 'Gagal memulihkan database: ' . $e->getMessage());
@@ -128,6 +137,8 @@ class BackupController extends Controller
 
             try {
                 $this->backupService->restoreFromFile($filePath);
+
+                ActivityLog::record('restore', "Database toko dipulihkan dari file riwayat ({$filename}).");
 
                 return redirect()->route('backup.index')->with('success', "Database toko berhasil dipulihkan dari file {$filename}.");
             } catch (\Throwable $e) {

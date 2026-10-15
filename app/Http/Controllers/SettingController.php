@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\StoreSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,6 +63,8 @@ class SettingController extends Controller
 
         $setting->update($validated);
 
+        ActivityLog::record('settings', "Pengaturan profil toko ({$setting->store_name}) diperbarui.", $setting);
+
         return redirect()->route('settings.index')->with('success', 'Pengaturan profil toko dan struk berhasil diperbarui.');
     }
 
@@ -77,6 +80,8 @@ class SettingController extends Controller
         }
 
         $setting->update(['logo' => null]);
+
+        ActivityLog::record('settings', "Logo toko dihapus.", $setting);
 
         return redirect()->route('settings.index')->with('success', 'Logo toko berhasil dihapus.');
     }

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CategoryController;
@@ -203,8 +204,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/import',  [ImportExportController::class, 'import'])->name('import');
     });
 
-    // Audit / Aktivitas
-    Route::prefix('activity')->name('activity.')->group(function () {
-        Route::get('/', fn() => view('activity.index'))->name('index');
+    // Riwayat Aktivitas & Audit Trail (FASE 10.2 - Akses: Administrator)
+    Route::prefix('activity')->name('activity.')->middleware(['role:admin'])->group(function () {
+        Route::get('/', [ActivityController::class, 'index'])->name('index');
     });
 });

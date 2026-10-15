@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -144,6 +145,8 @@ class UserController extends Controller
             'password' => Hash::make($request->new_password),
         ]);
 
+        ActivityLog::record('update', "Password akun pengguna {$user->name} ({$user->email}) diperbarui oleh " . Auth::user()->name, $user);
+
         return redirect()->route('users.index')->with('success', 'Password pengguna berhasil diperbarui.');
     }
 
@@ -162,6 +165,8 @@ class UserController extends Controller
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
+        ActivityLog::record('update', "Status akun pengguna {$user->name} {$statusText} oleh " . Auth::user()->name, $user);
+
         return redirect()->route('users.index')->with('success', "Akun pengguna berhasil {$statusText}.");
     }
 
@@ -174,7 +179,12 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
+        $name = $user->name;
+        $email = $user->email;
+
         $user->delete();
+
+        ActivityLog::record('delete', "Akun pengguna {$name} ({$email}) dihapus oleh " . Auth::user()->name);
 
         return redirect()->route('users.index')->with('success', 'Pengguna berhasil dihapus.');
     }

@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\ActivityLog;
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -225,7 +226,12 @@ class ProductController extends Controller
             Storage::disk('public')->delete($product->image);
         }
 
+        $productName = $product->name;
+        $barcode = $product->barcode;
+
         $product->delete();
+
+        ActivityLog::record('delete', "Produk \"{$productName}\" (Barcode: {$barcode}) dihapus dari master produk.");
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
     }

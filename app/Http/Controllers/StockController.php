@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockAdjustment;
@@ -127,7 +128,7 @@ class StockController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($request) {
+            $adjustment = DB::transaction(function () use ($request) {
                 // Rangkum catatan lengkap (kategori alasan + catatan tambahan)
                 $combinedNotes = $request->reason_category;
                 if ($request->filled('notes')) {
@@ -166,6 +167,8 @@ class StockController extends Controller
 
                 return $adjustment;
             });
+
+            ActivityLog::record('adjustment', "Penyesuaian stok opname ({$adjustment->code}) berhasil disimpan untuk " . count($request->items) . " produk.", $adjustment);
 
             return redirect()->route('stock.adjustment')
                 ->with('success', 'Penyesuaian stok berhasil disimpan! Stok master data produk telah disinkronkan secara otomatis.');
