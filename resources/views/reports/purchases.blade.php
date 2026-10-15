@@ -4,40 +4,48 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold py-1 mb-0">
-        <span class="text-muted fw-light">Laporan /</span> Pembelian (Kulakan)
-    </h4>
-    <button type="button" class="btn btn-primary" onclick="window.print()">
-        <i class="bx bx-printer me-1"></i> Cetak Laporan
-    </button>
+    <div>
+        <h4 class="fw-bold py-1 mb-0">
+            <span class="text-muted fw-light">Laporan /</span> Pembelian (Kulakan)
+        </h4>
+        <small class="text-muted">Rekap pengadaan stok produk per supplier, nominal belanja, dan status pembayaran</small>
+    </div>
+    <div class="d-print-none d-flex gap-2">
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="bx bx-printer me-1"></i> Cetak Laporan
+        </button>
+    </div>
 </div>
 
 <!-- Filter Card -->
 <div class="card mb-4 d-print-none">
     <div class="card-body">
-        <form class="row gx-3 gy-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Bulan Laporan</label>
-                <input type="month" class="form-control" value="{{ date('Y-m') }}">
+        <form method="GET" action="{{ route('reports.purchases') }}" class="row gx-3 gy-2 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label" for="month">Bulan Laporan</label>
+                <input type="month" id="month" name="month" class="form-control" value="{{ $month }}">
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Supplier</label>
-                <select class="form-select">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label" for="supplier_id">Supplier</label>
+                <select id="supplier_id" name="supplier_id" class="form-select">
                     <option value="all">Semua Supplier</option>
-                    <option value="1">PT. Indofood</option>
-                    <option value="2">PT. Tirta Investama</option>
+                    @foreach($suppliers as $s)
+                    <option value="{{ $s->id }}" {{ request('supplier_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                    @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Status Bayar</label>
-                <select class="form-select">
-                    <option value="all">Semua</option>
-                    <option value="lunas">Lunas</option>
-                    <option value="hutang">Hutang (Tempo)</option>
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label" for="payment_status">Status Bayar</label>
+                <select id="payment_status" name="payment_status" class="form-select">
+                    <option value="all">Semua Status</option>
+                    <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Lunas</option>
+                    <option value="partial" {{ request('payment_status') == 'partial' ? 'selected' : '' }}>Sebagian (Tempo)</option>
+                    <option value="unpaid" {{ request('payment_status') == 'unpaid' ? 'selected' : '' }}>Belum Bayar (Hutang)</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <button type="button" class="btn btn-primary w-100">Filter Laporan</button>
+            <div class="col-md-3 col-sm-6 d-flex gap-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bx bx-filter-alt me-1"></i>Filter</button>
+                <a href="{{ route('reports.purchases') }}" class="btn btn-outline-secondary" title="Reset"><i class="bx bx-reset"></i></a>
             </div>
         </form>
     </div>
@@ -45,30 +53,30 @@
 
 <!-- Summary Cards -->
 <div class="row mb-4">
-    <div class="col-sm-6 col-lg-4 mb-4 mb-lg-0">
+    <div class="col-sm-6 col-lg-4 mb-3 mb-lg-0">
         <div class="card bg-primary text-white h-100">
             <div class="card-body">
-                <h6 class="text-white mb-2">Total Belanja (Bulan Ini)</h6>
-                <h3 class="text-white fw-bold mb-2">Rp 12.850.000</h3>
-                <small>Dari 15 Transaksi PO</small>
+                <h6 class="text-white mb-2">Total Belanja Kulakan</h6>
+                <h3 class="text-white fw-bold mb-1">Rp {{ number_format($totalPurchases, 0, ',', '.') }}</h3>
+                <small class="text-white-50">Dari {{ $totalCount }} Faktur / Dokumen PO</small>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-4 mb-4 mb-lg-0">
+    <div class="col-sm-6 col-lg-4 mb-3 mb-lg-0">
         <div class="card bg-success text-white h-100">
             <div class="card-body">
-                <h6 class="text-white mb-2">Pembelian Lunas</h6>
-                <h3 class="text-white fw-bold mb-2">Rp 9.500.000</h3>
-                <small>10 Transaksi</small>
+                <h6 class="text-white mb-2">Pembelian Terbayar (Lunas)</h6>
+                <h3 class="text-white fw-bold mb-1">Rp {{ number_format($totalPaid, 0, ',', '.') }}</h3>
+                <small class="text-white-50">{{ $paidCount }} Faktur Lunas</small>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-4 mb-4 mb-lg-0">
+    <div class="col-sm-6 col-lg-4 mb-3 mb-lg-0">
         <div class="card bg-warning text-white h-100">
             <div class="card-body">
-                <h6 class="text-white mb-2">Pembelian Belum Lunas (Hutang Usaha)</h6>
-                <h3 class="text-white fw-bold mb-2">Rp 3.350.000</h3>
-                <small>5 Transaksi (Jatuh Tempo Mendekat)</small>
+                <h6 class="text-white mb-2">Sisa Hutang ke Supplier</h6>
+                <h3 class="text-white fw-bold mb-1">Rp {{ number_format($totalDebt, 0, ',', '.') }}</h3>
+                <small class="text-white-50">{{ $debtCount }} Faktur Tempo / Hutang</small>
             </div>
         </div>
     </div>
@@ -76,63 +84,83 @@
 
 <div class="card">
     <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Rincian Pembelian (Okt 2026)</h5>
+        <h5 class="card-title mb-0">Rincian Pembelian (Periode: {{ Carbon\Carbon::parse($month . '-01')->translatedFormat('F Y') }})</h5>
     </div>
     <div class="table-responsive text-nowrap">
-        <table class="table table-striped">
+        <table class="table table-striped mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Tanggal</th>
-                    <th>No PO</th>
+                    <th>No. Faktur / PO</th>
                     <th>Supplier</th>
                     <th>Item Barang Masuk</th>
                     <th>Status</th>
-                    <th>Total Biaya</th>
+                    <th class="text-end">Total Biaya</th>
+                    <th class="text-end">Dibayar</th>
+                    <th class="text-end">Sisa Hutang</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
-                @php
-                $purchases = [
-                    ['date' => '10 Okt 2026', 'no' => 'PO-202610-008', 'sup' => 'PT. Indofood', 'items' => 250, 'status' => 'Lunas', 'total' => 4500000],
-                    ['date' => '08 Okt 2026', 'no' => 'PO-202610-007', 'sup' => 'PT. Tirta Investama', 'items' => 120, 'status' => 'Hutang', 'total' => 2100000],
-                    ['date' => '05 Okt 2026', 'no' => 'PO-202610-006', 'sup' => 'Grosir Sembako Jaya', 'items' => 85, 'status' => 'Lunas', 'total' => 1250000],
-                    ['date' => '01 Okt 2026', 'no' => 'PO-202610-005', 'sup' => 'PT. Unilever', 'items' => 180, 'status' => 'Hutang', 'total' => 5000000],
-                ];
-                $total = array_sum(array_column($purchases, 'total'));
-                @endphp
-
-                @foreach($purchases as $p)
+                @forelse($purchases as $p)
                 <tr>
-                    <td>{{ $p['date'] }}</td>
-                    <td><span class="fw-medium text-primary">{{ $p['no'] }}</span></td>
-                    <td>{{ $p['sup'] }}</td>
-                    <td>{{ $p['items'] }} qty</td>
+                    <td>{{ $p->purchase_date->translatedFormat('d M Y') }}</td>
                     <td>
-                        <span class="badge bg-label-{{ $p['status'] == 'Lunas' ? 'success' : 'warning' }}">
-                            {{ $p['status'] }}
-                        </span>
+                        <a href="{{ route('purchases.show', $p->id) }}" class="fw-semibold text-primary">
+                            {{ $p->invoice_number }}
+                        </a>
                     </td>
-                    <td class="fw-bold text-danger">Rp {{ number_format($p['total'], 0, ',', '.') }}</td>
+                    <td>{{ $p->supplier?->name ?? 'Supplier Umum' }}</td>
+                    <td>{{ $p->items->sum('quantity') }} unit ({{ $p->items->count() }} macam)</td>
+                    <td>
+                        @if($p->payment_status === 'paid')
+                            <span class="badge bg-label-success">Lunas</span>
+                        @elseif($p->payment_status === 'partial')
+                            <span class="badge bg-label-warning">Sebagian</span>
+                        @else
+                            <span class="badge bg-label-danger">Hutang</span>
+                        @endif
+                    </td>
+                    <td class="text-end fw-bold">Rp {{ number_format($p->total_amount, 0, ',', '.') }}</td>
+                    <td class="text-end text-success">Rp {{ number_format($p->paid_amount, 0, ',', '.') }}</td>
+                    <td class="text-end {{ ($p->total_amount - $p->paid_amount) > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                        Rp {{ number_format(max(0, $p->total_amount - $p->paid_amount), 0, ',', '.') }}
+                    </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bx bx-package fs-4 d-block mb-1"></i>
+                        Tidak ada data pembelian pada bulan ini.
+                    </td>
+                </tr>
+                @endforelse
             </tbody>
             <tfoot class="table-light fw-bold">
                 <tr>
-                    <td colspan="5" class="text-end">TOTAL BIAYA KULAKAN:</td>
-                    <td class="text-danger fs-5">Rp {{ number_format($total, 0, ',', '.') }}</td>
+                    <td colspan="5" class="text-end">TOTAL:</td>
+                    <td class="text-end text-primary">Rp {{ number_format($totalPurchases, 0, ',', '.') }}</td>
+                    <td class="text-end text-success">Rp {{ number_format($totalPaid, 0, ',', '.') }}</td>
+                    <td class="text-end text-danger">Rp {{ number_format($totalDebt, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>
         </table>
     </div>
+
+    @if($purchases->hasPages())
+    <div class="card-footer d-flex justify-content-center d-print-none">
+        {{ $purchases->links() }}
+    </div>
+    @endif
 </div>
 @endsection
 
 @section('page-style')
 <style>
     @media print {
-        .layout-menu, .layout-navbar, .d-print-none, .btn { display: none !important; }
+        .layout-menu, .layout-navbar, .d-print-none, .btn, .footer { display: none !important; }
         .content-wrapper { padding: 0 !important; margin: 0 !important; }
         .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        @page { size: landscape; margin: 10mm; }
     }
 </style>
 @endsection

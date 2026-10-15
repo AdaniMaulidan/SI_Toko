@@ -4,94 +4,148 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold py-1 mb-0">
-        <span class="text-muted fw-light">Laporan /</span> Arus Kas (Cash Flow)
-    </h4>
-    <button type="button" class="btn btn-primary" onclick="window.print()">
-        <i class="bx bx-printer me-1"></i> Cetak Laporan
-    </button>
+    <div>
+        <h4 class="fw-bold py-1 mb-0">
+            <span class="text-muted fw-light">Laporan /</span> Arus Kas (Cash Flow Statement)
+        </h4>
+        <small class="text-muted">Ringkasan saldo awal kas, penerimaan kas masuk, pengeluaran kas keluar, dan saldo akhir toko</small>
+    </div>
+    <div class="d-print-none d-flex gap-2">
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="bx bx-printer me-1"></i> Cetak Laporan
+        </button>
+    </div>
 </div>
 
 <!-- Filter Card -->
 <div class="card mb-4 d-print-none">
     <div class="card-body">
-        <form class="row gx-3 gy-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Tanggal Mulai</label>
-                <input type="date" class="form-control" value="{{ date('Y-m-01') }}">
+        <form method="GET" action="{{ route('reports.cash') }}" class="row gx-3 gy-2 align-items-end">
+            <div class="col-md-4 col-sm-6">
+                <label class="form-label" for="start_date">Tanggal Mulai</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ $startDate }}">
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Tanggal Akhir</label>
-                <input type="date" class="form-control" value="{{ date('Y-m-t') }}">
+            <div class="col-md-4 col-sm-6">
+                <label class="form-label" for="end_date">Tanggal Akhir</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ $endDate }}">
             </div>
-            <div class="col-md-3">
-                <button type="button" class="btn btn-primary w-100">Filter Laporan</button>
+            <div class="col-md-4 col-sm-12 d-flex gap-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bx bx-filter-alt me-1"></i>Filter Laporan</button>
+                <a href="{{ route('reports.cash') }}" class="btn btn-outline-secondary" title="Reset"><i class="bx bx-reset"></i></a>
             </div>
         </form>
     </div>
 </div>
 
+<!-- 3 Summary Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="card bg-secondary text-white h-100">
+            <div class="card-body">
+                <span class="text-white-50 d-block mb-1">Saldo Awal Kas</span>
+                <h4 class="text-white fw-bold mb-0">Rp {{ number_format($openingBalance, 0, ',', '.') }}</h4>
+                <small class="text-white-50">Per {{ Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <span class="text-white-50 d-block mb-1">Total Kas Masuk (In)</span>
+                <h4 class="text-white fw-bold mb-0">+ Rp {{ number_format($totalInflow, 0, ',', '.') }}</h4>
+                <small class="text-white-50">{{ $inflowsByCategory->count() }} Kategori Sumber</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <span class="text-white-50 d-block mb-1">Total Kas Keluar (Out)</span>
+                <h4 class="text-white fw-bold mb-0">- Rp {{ number_format($totalOutflow, 0, ',', '.') }}</h4>
+                <small class="text-white-50">{{ $outflowsByCategory->count() }} Kategori Pengeluaran</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <span class="text-white-50 d-block mb-1">Saldo Akhir (Cash on Hand)</span>
+                <h4 class="text-white fw-bold mb-0">Rp {{ number_format($closingBalance, 0, ',', '.') }}</h4>
+                <small class="text-white-50">Per {{ Carbon\Carbon::parse($endDate)->translatedFormat('d M Y') }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
-    <!-- Rekapitulasi Kas -->
+    <!-- Rekapitulasi Kas Formal -->
     <div class="col-lg-12 mb-4">
         <div class="card h-100">
             <div class="card-header border-bottom">
-                <h5 class="card-title mb-0">Ringkasan Arus Kas - Periode Berjalan</h5>
+                <h5 class="card-title mb-0">Laporan Arus Kas Periode {{ Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') }} s/d {{ Carbon\Carbon::parse($endDate)->translatedFormat('d M Y') }}</h5>
             </div>
             <div class="card-body py-4">
                 
-                <div class="d-flex justify-content-between mb-2 ps-4">
-                    <span class="fw-bold">Saldo Awal (Per 1 Okt 2026)</span>
-                    <span class="fw-bold">Rp 10.000.000</span>
+                <div class="d-flex justify-content-between mb-3 ps-3 pe-3 bg-light p-2 rounded">
+                    <span class="fw-bold">SALDO AWAL KAS (Per {{ Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') }})</span>
+                    <span class="fw-bold fs-6">Rp {{ number_format($openingBalance, 0, ',', '.') }}</span>
                 </div>
-                
-                <hr>
 
-                <!-- ARUS MASUK -->
-                <h6 class="text-success fw-bold text-uppercase mb-3"><i class="bx bx-down-arrow-alt me-1"></i> Kas Masuk (Inflow)</h6>
+                <!-- 1. ARUS KAS MASUK -->
+                <h6 class="text-success fw-bold text-uppercase mt-4 mb-3">
+                    <i class="bx bx-down-arrow-alt me-1"></i> Arus Kas Masuk (Inflow)
+                </h6>
+                @forelse($inflowsByCategory as $in)
                 <div class="d-flex justify-content-between mb-2 ps-4">
-                    <span>Penerimaan Penjualan Tunai</span>
-                    <span>Rp 25.000.000</span>
+                    <span>Penerimaan {{ $in->category }}</span>
+                    <span class="fw-semibold text-success">+ Rp {{ number_format($in->total, 0, ',', '.') }}</span>
                 </div>
-                <div class="d-flex justify-content-between mb-2 ps-4">
-                    <span>Pembayaran Piutang Pelanggan</span>
-                    <span>Rp 1.500.000</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2 ps-4">
-                    <span>Lain-lain / Modal Awal Tambahan</span>
+                @empty
+                <div class="d-flex justify-content-between mb-2 ps-4 text-muted">
+                    <span>Tidak ada penerimaan kas masuk</span>
                     <span>Rp 0</span>
                 </div>
+                @endforelse
                 <div class="d-flex justify-content-between mb-4 ps-4 fw-bold border-top pt-2 text-success">
-                    <span>Total Kas Masuk</span>
-                    <span>Rp 26.500.000</span>
+                    <span>TOTAL ARUS KAS MASUK</span>
+                    <span>+ Rp {{ number_format($totalInflow, 0, ',', '.') }}</span>
                 </div>
 
-                <!-- ARUS KELUAR -->
-                <h6 class="text-danger fw-bold text-uppercase mb-3"><i class="bx bx-up-arrow-alt me-1"></i> Kas Keluar (Outflow)</h6>
-                <div class="d-flex justify-content-between mb-2 ps-4 text-muted">
-                    <span>Pembayaran Supplier (Kulakan)</span>
-                    <span>(Rp 12.000.000)</span>
+                <!-- 2. ARUS KAS KELUAR -->
+                <h6 class="text-danger fw-bold text-uppercase mt-4 mb-3">
+                    <i class="bx bx-up-arrow-alt me-1"></i> Arus Kas Keluar (Outflow)
+                </h6>
+                @forelse($outflowsByCategory as $out)
+                <div class="d-flex justify-content-between mb-2 ps-4">
+                    <span>Pengeluaran {{ $out->category }}</span>
+                    <span class="fw-semibold text-danger">- Rp {{ number_format($out->total, 0, ',', '.') }}</span>
                 </div>
+                @empty
                 <div class="d-flex justify-content-between mb-2 ps-4 text-muted">
-                    <span>Biaya Operasional Toko (Listrik, Gaji, dll)</span>
-                    <span>(Rp 3.500.000)</span>
+                    <span>Tidak ada pengeluaran kas keluar</span>
+                    <span>Rp 0</span>
                 </div>
-                <div class="d-flex justify-content-between mb-2 ps-4 text-muted">
-                    <span>Setor Bank / Prive (Penarikan Owner)</span>
-                    <span>(Rp 8.500.000)</span>
-                </div>
+                @endforelse
                 <div class="d-flex justify-content-between mb-4 ps-4 fw-bold border-top pt-2 text-danger">
-                    <span>Total Kas Keluar</span>
-                    <span>(Rp 24.000.000)</span>
+                    <span>TOTAL ARUS KAS KELUAR</span>
+                    <span>- Rp {{ number_format($totalOutflow, 0, ',', '.') }}</span>
+                </div>
+
+                <!-- SURPLUS / DEFISIT -->
+                <div class="d-flex justify-content-between mb-4 ps-4 pe-3 fw-bold border-top pt-3 {{ $netCashChange >= 0 ? 'text-primary' : 'text-danger' }}">
+                    <span>KENAIKAN / (PENURUNAN) BERSIH KAS (NET CHANGE)</span>
+                    <span class="fs-6">{{ $netCashChange >= 0 ? '+' : '' }} Rp {{ number_format($netCashChange, 0, ',', '.') }}</span>
                 </div>
 
             </div>
             <div class="card-footer border-top bg-lighter">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-primary">SALDO AKHIR (CASH ON HAND)</h5>
-                    <h4 class="mb-0 fw-bold text-primary">Rp 12.500.000</h4>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-primary">SALDO AKHIR KAS (CASH ON HAND)</h5>
+                        <small class="text-muted d-block mt-1">Saldo Akhir = Saldo Awal + Total Kas Masuk - Total Kas Keluar</small>
+                    </div>
+                    <h3 class="mb-0 fw-bold text-primary">Rp {{ number_format($closingBalance, 0, ',', '.') }}</h3>
                 </div>
-                <small class="text-muted d-block mt-2">Saldo Akhir = Saldo Awal + Total Kas Masuk - Total Kas Keluar</small>
             </div>
         </div>
     </div>
@@ -101,9 +155,10 @@
 @section('page-style')
 <style>
     @media print {
-        .layout-menu, .layout-navbar, .d-print-none, .btn { display: none !important; }
+        .layout-menu, .layout-navbar, .d-print-none, .btn, .footer { display: none !important; }
         .content-wrapper { padding: 0 !important; margin: 0 !important; }
         .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        @page { size: portrait; margin: 10mm; }
     }
 </style>
 @endsection

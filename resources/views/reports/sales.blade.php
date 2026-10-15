@@ -4,36 +4,53 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold py-1 mb-0">
-        <span class="text-muted fw-light">Laporan /</span> Penjualan
-    </h4>
-    <button type="button" class="btn btn-primary" onclick="window.print()">
-        <i class="bx bx-printer me-1"></i> Cetak Laporan
-    </button>
+    <div>
+        <h4 class="fw-bold py-1 mb-0">
+            <span class="text-muted fw-light">Laporan /</span> Penjualan
+        </h4>
+        <small class="text-muted">Rekap transaksi penjualan kasir, omset, diskon, dan metode pembayaran</small>
+    </div>
+    <div class="d-print-none d-flex gap-2">
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="bx bx-printer me-1"></i> Cetak Laporan
+        </button>
+    </div>
 </div>
 
 <!-- Filter Card -->
 <div class="card mb-4 d-print-none">
     <div class="card-body">
-        <form class="row gx-3 gy-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Tanggal Mulai</label>
-                <input type="date" class="form-control" value="{{ date('Y-m-01') }}">
+        <form method="GET" action="{{ route('reports.sales') }}" class="row gx-3 gy-2 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label" for="start_date">Tanggal Mulai</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ $startDate }}">
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Tanggal Akhir</label>
-                <input type="date" class="form-control" value="{{ date('Y-m-t') }}">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label" for="end_date">Tanggal Akhir</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ $endDate }}">
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Kasir</label>
-                <select class="form-select">
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label" for="user_id">Kasir</label>
+                <select id="user_id" name="user_id" class="form-select">
                     <option value="all">Semua Kasir</option>
-                    <option value="1">Admin Utama</option>
-                    <option value="2">Kasir 1</option>
+                    @foreach($cashiers as $c)
+                    <option value="{{ $c->id }}" {{ request('user_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                    @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
-                <button type="button" class="btn btn-primary w-100">Filter Laporan</button>
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label" for="payment_method">Metode Bayar</label>
+                <select id="payment_method" name="payment_method" class="form-select">
+                    <option value="all">Semua Metode</option>
+                    <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
+                    <option value="qris" {{ request('payment_method') == 'qris' ? 'selected' : '' }}>QRIS</option>
+                    <option value="transfer" {{ request('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
+                    <option value="debt" {{ request('payment_method') == 'debt' ? 'selected' : '' }}>Hutang (Kredit)</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-12 d-flex gap-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bx bx-filter-alt me-1"></i>Filter</button>
+                <a href="{{ route('reports.sales') }}" class="btn btn-outline-secondary" title="Reset"><i class="bx bx-reset"></i></a>
             </div>
         </form>
     </div>
@@ -46,15 +63,12 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2 pb-1">
                     <div class="avatar me-2">
-                        <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-cart"></i></span>
+                        <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-receipt fs-4"></i></span>
                     </div>
-                    <h4 class="ms-1 mb-0">125</h4>
+                    <h4 class="ms-1 mb-0">{{ number_format($totalTransactions) }}</h4>
                 </div>
-                <p class="mb-1">Total Transaksi</p>
-                <p class="mb-0">
-                    <span class="fw-medium me-1">+18%</span>
-                    <small class="text-muted">dari bulan lalu</small>
-                </p>
+                <p class="mb-1 text-muted">Total Transaksi</p>
+                <small class="text-primary fw-medium">Struk Penjualan</small>
             </div>
         </div>
     </div>
@@ -63,15 +77,12 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2 pb-1">
                     <div class="avatar me-2">
-                        <span class="avatar-initial rounded bg-label-success"><i class="bx bx-dollar"></i></span>
+                        <span class="avatar-initial rounded bg-label-success"><i class="bx bx-dollar-circle fs-4"></i></span>
                     </div>
-                    <h4 class="ms-1 mb-0">28.450k</h4>
+                    <h4 class="ms-1 mb-0 text-success">Rp {{ number_format($totalNetSales, 0, ',', '.') }}</h4>
                 </div>
-                <p class="mb-1">Total Pendapatan</p>
-                <p class="mb-0">
-                    <span class="fw-medium me-1">+12%</span>
-                    <small class="text-muted">dari bulan lalu</small>
-                </p>
+                <p class="mb-1 text-muted">Total Pendapatan Bersih</p>
+                <small class="text-muted">Kotor: Rp {{ number_format($totalGrossSales, 0, ',', '.') }}</small>
             </div>
         </div>
     </div>
@@ -80,15 +91,12 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2 pb-1">
                     <div class="avatar me-2">
-                        <span class="avatar-initial rounded bg-label-warning"><i class="bx bx-package"></i></span>
+                        <span class="avatar-initial rounded bg-label-warning"><i class="bx bx-package fs-4"></i></span>
                     </div>
-                    <h4 class="ms-1 mb-0">842</h4>
+                    <h4 class="ms-1 mb-0 text-warning">{{ number_format($totalQtySold) }}</h4>
                 </div>
-                <p class="mb-1">Barang Terjual (Qty)</p>
-                <p class="mb-0">
-                    <span class="fw-medium me-1">+5%</span>
-                    <small class="text-muted">dari bulan lalu</small>
-                </p>
+                <p class="mb-1 text-muted">Barang Terjual (Qty)</p>
+                <small class="text-muted">Diskon: Rp {{ number_format($totalDiscounts, 0, ',', '.') }}</small>
             </div>
         </div>
     </div>
@@ -97,15 +105,12 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2 pb-1">
                     <div class="avatar me-2">
-                        <span class="avatar-initial rounded bg-label-info"><i class="bx bx-user"></i></span>
+                        <span class="avatar-initial rounded bg-label-info"><i class="bx bx-wallet fs-4"></i></span>
                     </div>
-                    <h4 class="ms-1 mb-0">32</h4>
+                    <h4 class="ms-1 mb-0">Rp {{ number_format($averagePerTrx, 0, ',', '.') }}</h4>
                 </div>
-                <p class="mb-1">Pelanggan Unik</p>
-                <p class="mb-0">
-                    <span class="fw-medium me-1">+2%</span>
-                    <small class="text-muted">dari bulan lalu</small>
-                </p>
+                <p class="mb-1 text-muted">Rata-rata per Transaksi</p>
+                <small class="text-muted">Basket Size</small>
             </div>
         </div>
     </div>
@@ -113,68 +118,96 @@
 
 <div class="card">
     <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Rincian Laporan Penjualan (Okt 2026)</h5>
+        <h5 class="card-title mb-0">Rincian Laporan Penjualan ({{ Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') }} s/d {{ Carbon\Carbon::parse($endDate)->translatedFormat('d M Y') }})</h5>
     </div>
     <div class="table-responsive text-nowrap">
-        <table class="table table-striped">
+        <table class="table table-striped mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Tanggal</th>
-                    <th>No Transaksi</th>
+                    <th>Tanggal & Jam</th>
+                    <th>No. Faktur</th>
+                    <th>Kasir</th>
                     <th>Pelanggan</th>
-                    <th>Total Item</th>
-                    <th>Metode Pembayaran</th>
-                    <th>Subtotal</th>
-                    <th>Diskon</th>
-                    <th>Total Pendapatan</th>
+                    <th>Jml Item</th>
+                    <th>Metode</th>
+                    <th class="text-end">Subtotal</th>
+                    <th class="text-end">Diskon</th>
+                    <th class="text-end">Total Akhir</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
-                @php
-                $sales = [
-                    ['date' => '07 Okt 2026', 'no' => 'TRX-10029', 'cust' => 'Budi Santoso', 'items' => 5, 'method' => 'Tunai', 'sub' => 150000, 'disc' => 5000, 'total' => 145000],
-                    ['date' => '07 Okt 2026', 'no' => 'TRX-10028', 'cust' => 'Umum', 'items' => 2, 'method' => 'QRIS', 'sub' => 35000, 'disc' => 0, 'total' => 35000],
-                    ['date' => '06 Okt 2026', 'no' => 'TRX-10027', 'cust' => 'Ahmad Junaidi', 'items' => 12, 'method' => 'Transfer', 'sub' => 320000, 'disc' => 8000, 'total' => 312000],
-                    ['date' => '05 Okt 2026', 'no' => 'TRX-10026', 'cust' => 'Siti Aminah', 'items' => 8, 'method' => 'Tunai', 'sub' => 150000, 'disc' => 0, 'total' => 150000],
-                ];
-                $total_pendapatan = array_sum(array_column($sales, 'total'));
-                @endphp
-
-                @foreach($sales as $sale)
+                @forelse($sales as $sale)
                 <tr>
-                    <td>{{ $sale['date'] }}</td>
-                    <td><span class="fw-medium text-primary">{{ $sale['no'] }}</span></td>
-                    <td>{{ $sale['cust'] }}</td>
-                    <td>{{ $sale['items'] }} pcs</td>
                     <td>
-                        <span class="badge bg-label-{{ $sale['method'] == 'Tunai' ? 'success' : ($sale['method'] == 'QRIS' ? 'info' : 'primary') }}">
-                            {{ $sale['method'] }}
-                        </span>
+                        <div>{{ $sale->created_at->translatedFormat('d M Y') }}</div>
+                        <small class="text-muted">{{ $sale->created_at->format('H:i') }}</small>
                     </td>
-                    <td>Rp {{ number_format($sale['sub'], 0, ',', '.') }}</td>
-                    <td class="text-danger">-Rp {{ number_format($sale['disc'], 0, ',', '.') }}</td>
-                    <td class="fw-bold">Rp {{ number_format($sale['total'], 0, ',', '.') }}</td>
+                    <td>
+                        <a href="{{ route('transactions.show', $sale->id) }}" class="fw-semibold text-primary">
+                            {{ $sale->invoice_number }}
+                        </a>
+                    </td>
+                    <td><small class="text-muted">{{ $sale->user?->name ?? 'Kasir' }}</small></td>
+                    <td>{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</td>
+                    <td>{{ $sale->items->sum('quantity') }} item</td>
+                    <td>
+                        @php
+                            $methodBadge = match($sale->payment_method) {
+                                'cash'     => 'bg-label-success',
+                                'qris'     => 'bg-label-info',
+                                'transfer' => 'bg-label-primary',
+                                'debt'     => 'bg-label-warning',
+                                default    => 'bg-label-secondary',
+                            };
+                            $methodLabel = match($sale->payment_method) {
+                                'cash'     => 'Tunai',
+                                'qris'     => 'QRIS',
+                                'transfer' => 'Transfer',
+                                'debt'     => 'Hutang',
+                                default    => ucfirst($sale->payment_method),
+                            };
+                        @endphp
+                        <span class="badge {{ $methodBadge }}">{{ $methodLabel }}</span>
+                    </td>
+                    <td class="text-end">Rp {{ number_format($sale->subtotal, 0, ',', '.') }}</td>
+                    <td class="text-end text-danger">
+                        {{ $sale->discount > 0 ? '-Rp ' . number_format($sale->discount, 0, ',', '.') : '-' }}
+                    </td>
+                    <td class="text-end fw-bold">Rp {{ number_format($sale->total_amount, 0, ',', '.') }}</td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="bx bx-receipt fs-4 d-block mb-1"></i>
+                        Tidak ada data penjualan pada rentang filter ini.
+                    </td>
+                </tr>
+                @endforelse
             </tbody>
             <tfoot class="table-light fw-bold">
                 <tr>
-                    <td colspan="7" class="text-end">TOTAL PENDAPATAN (Filter Aktif):</td>
-                    <td class="text-primary fs-5">Rp {{ number_format($total_pendapatan, 0, ',', '.') }}</td>
+                    <td colspan="8" class="text-end">TOTAL PENDAPATAN BERSIH:</td>
+                    <td class="text-end text-primary fs-5">Rp {{ number_format($totalNetSales, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>
         </table>
     </div>
+
+    @if($sales->hasPages())
+    <div class="card-footer d-flex justify-content-center d-print-none">
+        {{ $sales->links() }}
+    </div>
+    @endif
 </div>
 @endsection
 
 @section('page-style')
 <style>
     @media print {
-        .layout-menu, .layout-navbar, .d-print-none, .btn { display: none !important; }
+        .layout-menu, .layout-navbar, .d-print-none, .btn, .footer { display: none !important; }
         .content-wrapper { padding: 0 !important; margin: 0 !important; }
         .card { box-shadow: none !important; border: 1px solid #ddd !important; }
-        @page { size: landscape; }
+        @page { size: landscape; margin: 10mm; }
     }
 </style>
 @endsection

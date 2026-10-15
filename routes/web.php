@@ -10,6 +10,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
@@ -137,14 +138,14 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{cashFlow}', [FinanceController::class, 'destroy'])->name('destroy');
     });
 
-    // Laporan
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/sales',     fn() => view('reports.sales'))->name('sales');
-        Route::get('/purchases', fn() => view('reports.purchases'))->name('purchases');
-        Route::get('/stock',     fn() => view('reports.stock'))->name('stock');
-        Route::get('/products',  fn() => view('reports.products'))->name('products');
-        Route::get('/profit',    fn() => view('reports.profit'))->name('profit');
-        Route::get('/cash',      fn() => view('reports.cash'))->name('cash');
+    // Modul Laporan Komprehensif (Akses: Administrator - FASE 8.2)
+    Route::prefix('reports')->name('reports.')->middleware(['role:admin'])->group(function () {
+        Route::get('/sales',     [ReportController::class, 'sales'])->name('sales');
+        Route::get('/purchases', [ReportController::class, 'purchases'])->name('purchases');
+        Route::get('/stock',     [ReportController::class, 'stock'])->name('stock');
+        Route::get('/products',  [ReportController::class, 'products'])->name('products');
+        Route::get('/profit',    [ReportController::class, 'profit'])->name('profit');
+        Route::get('/cash',      [ReportController::class, 'cash'])->name('cash');
     });
 
     // Manajemen Pengguna (Akses: Administrator / Owner)
