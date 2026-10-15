@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\PurchaseItem;
+use App\Models\SaleItem;
+use App\Models\StockAdjustmentItem;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -133,13 +136,47 @@ class ProductController extends Controller
     }
 
     /**
-     * Tampilkan detail produk
+     * Tampilkan detail produk beserta riwayat transaksi & mutasi stok
      */
     public function show(Product $product)
     {
         $product->load(['category', 'unit']);
 
-        return view('products.show', compact('product'));
+        // Riwayat Penjualan Kasir untuk produk ini (maks 10 terakhir)
+        $recentSales = SaleItem::where('product_id', $product->id)
+            ->with(['sale.user', 'sale.customer'])
+            ->latest('id')
+            ->limit(10)
+            ->get();
+
+        // Riwayat Pembelian (Kulakan) untuk produk ini (maks 10 terakhir)
+        $recentPurchases = PurchaseItem::where('product_id', $product->id)
+            ->with(['purchase.supplier', 'purchase.user'])
+            ->latest('id')
+            ->limit(10)
+            ->get();
+
+        // Riwayat Penyesuaian Stok (Stock Opname) untuk produk ini (maks 10 terakhir)
+        $recentAdjustments = StockAdjustmentItem::where('product_id', $product->id)
+            ->with(['adjustment.user'])
+            ->latest('id')
+            ->limit(10)
+            ->get();
+
+        // Statistik agregat kumulatif produk
+        $productStats = [
+            'total_sold_qty'    => (int) SaleItem::where('product_id', $product->id)->sum('quantity'),
+            'total_sold_amount' => (float) SaleItem::where('product_id', $product->id)->sum('subtotal'),
+            'total_bought_qty'  => (int) PurchaseItem::where('product_id', $product->id)->sum('quantity'),
+        ];
+
+        return view('products.show', compact(
+            'product',
+            'recentSales',
+            'recentPurchases',
+            'recentAdjustments',
+            'productStats'
+        ));
     }
 
     /**

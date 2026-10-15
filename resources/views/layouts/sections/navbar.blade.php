@@ -12,71 +12,105 @@
 
     <!-- Search -->
     <div class="navbar-nav align-items-center">
-      <div class="nav-item d-flex align-items-center">
-        <i class="icon-base bx bx-search icon-md"></i>
-        <input type="text" class="form-control border-0 shadow-none ps-1 ps-sm-2"
-          placeholder="Cari..." aria-label="Cari..." />
-      </div>
+      <form action="{{ route('products.index') }}" method="GET" class="nav-item d-flex align-items-center mb-0">
+        <i class="icon-base bx bx-search icon-md text-muted"></i>
+        <input type="text" name="search" class="form-control border-0 shadow-none ps-1 ps-sm-2"
+          placeholder="Cari produk / barcode... (Enter)" aria-label="Cari..." value="{{ request('search') }}" />
+      </form>
     </div>
     <!-- /Search -->
 
     <ul class="navbar-nav flex-row align-items-center ms-auto">
 
-      <!-- Notifikasi Stok -->
+      <!-- Notifikasi Stok Dinamis -->
+      @php
+        $totalAlerts  = $navbarTotalAlerts ?? 0;
+        $lowCount     = $navbarLowStockCount ?? 0;
+        $outCount     = $navbarOutOfStockCount ?? 0;
+        $criticalList = $navbarCriticalProducts ?? collect();
+      @endphp
       <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
         <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
-          data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+          data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Peringatan Stok Toko">
           <span class="position-relative">
             <i class="icon-base bx bx-bell icon-md"></i>
-            {{-- Badge jumlah notifikasi stok --}}
-            <span class="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
+            @if($totalAlerts > 0)
+              <span class="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
+            @endif
           </span>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end py-0">
+        <ul class="dropdown-menu dropdown-menu-end py-0 shadow-lg" style="min-width: 320px;">
           <li class="dropdown-menu-header border-bottom">
             <div class="dropdown-header d-flex align-items-center py-3">
-              <h5 class="text-body mb-0 me-auto">Notifikasi</h5>
-              <a href="javascript:void(0);" class="dropdown-notifications-all text-body"
-                data-bs-toggle="tooltip" data-bs-placement="top" title="Tandai semua dibaca">
-                <i class="icon-base bx bx-envelope-open icon-md"></i>
-              </a>
+              <h6 class="text-body mb-0 me-auto fw-bold">Peringatan Stok</h6>
+              @if($totalAlerts > 0)
+                <span class="badge bg-label-danger rounded-pill">{{ $totalAlerts }} Perlu Perhatian</span>
+              @else
+                <span class="badge bg-label-success rounded-pill">Stok Aman</span>
+              @endif
             </div>
           </li>
           <li class="dropdown-notifications-list scrollable-container">
             <ul class="list-group list-group-flush">
-              <li class="list-group-item list-group-item-action dropdown-notifications-item">
-                <div class="d-flex">
+              @if($outCount > 0)
+              <li class="list-group-item list-group-item-action dropdown-notifications-item py-2">
+                <a href="{{ route('stock.index', ['status' => 'empty']) }}" class="d-flex align-items-center text-decoration-none">
                   <div class="flex-shrink-0 me-3">
-                    <span class="badge bg-label-warning rounded-pill p-2">
-                      <i class="icon-base bx bx-package icon-sm"></i>
+                    <span class="badge bg-label-danger rounded-pill p-2">
+                      <i class="icon-base bx bx-x-circle icon-sm"></i>
                     </span>
                   </div>
                   <div class="flex-grow-1">
-                    <h6 class="small mb-0">Stok Menipis</h6>
-                    <small class="text-muted">5 produk stok di bawah minimum</small>
-                    <small class="text-muted d-block">Hari ini</small>
+                    <h6 class="small mb-0 text-danger fw-bold">Stok Habis (0 Item)</h6>
+                    <small class="text-muted">{{ $outCount }} produk perlu restock segera</small>
                   </div>
-                </div>
+                </a>
               </li>
-              <li class="list-group-item list-group-item-action dropdown-notifications-item">
-                <div class="d-flex">
+              @endif
+
+              @if($lowCount > 0)
+              <li class="list-group-item list-group-item-action dropdown-notifications-item py-2">
+                <a href="{{ route('stock.index', ['status' => 'low']) }}" class="d-flex align-items-center text-decoration-none">
                   <div class="flex-shrink-0 me-3">
-                    <span class="badge bg-label-danger rounded-pill p-2">
+                    <span class="badge bg-label-warning rounded-pill p-2">
                       <i class="icon-base bx bx-error icon-sm"></i>
                     </span>
                   </div>
                   <div class="flex-grow-1">
-                    <h6 class="small mb-0">Stok Habis</h6>
-                    <small class="text-muted">2 produk stok habis</small>
-                    <small class="text-muted d-block">Hari ini</small>
+                    <h6 class="small mb-0 text-warning fw-bold">Stok Menipis</h6>
+                    <small class="text-muted">{{ $lowCount }} produk di bawah batas aman</small>
                   </div>
+                </a>
+              </li>
+              @endif
+
+              @forelse($criticalList as $crit)
+              <li class="list-group-item list-group-item-action dropdown-notifications-item py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="text-truncate me-2" style="max-width: 190px;" title="{{ $crit->name }}">
+                    <span class="small fw-semibold d-block text-truncate">{{ $crit->name }}</span>
+                    <small class="text-muted font-monospace">{{ $crit->barcode }}</small>
+                  </div>
+                  @if($crit->stock <= 0)
+                    <span class="badge bg-danger">Habis</span>
+                  @else
+                    <span class="badge bg-warning text-dark">{{ $crit->stock }} {{ $crit->unit?->symbol ?? 'Pcs' }}</span>
+                  @endif
                 </div>
               </li>
+              @empty
+                @if($totalAlerts == 0)
+                <li class="list-group-item text-center py-4 text-muted">
+                  <i class="bx bx-check-circle text-success fs-3 d-block mb-1"></i>
+                  <small>Semua stok produk berada di batas aman.</small>
+                </li>
+                @endif
+              @endforelse
             </ul>
           </li>
           <li class="dropdown-menu-footer border-top">
-            <a href="{{ route('stock.index') }}" class="dropdown-item d-flex justify-content-center text-primary p-3">
-              Lihat Semua Notifikasi
+            <a href="{{ route('stock.index') }}" class="dropdown-item d-flex justify-content-center text-primary p-3 fw-semibold">
+              Lihat Manajemen Stok <i class="bx bx-right-arrow-alt ms-1"></i>
             </a>
           </li>
         </ul>
@@ -92,9 +126,9 @@
               class="w-px-40 h-auto rounded-circle" />
           </div>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end">
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
           <li>
-            <a class="dropdown-item" href="javascript:void(0);">
+            <a class="dropdown-item" href="{{ route('settings.index') }}">
               <div class="d-flex">
                 <div class="flex-shrink-0 me-3">
                   <div class="avatar avatar-online">
@@ -115,7 +149,7 @@
           <li>
             <a class="dropdown-item" href="{{ route('settings.index') }}">
               <i class="icon-base bx bx-cog icon-md me-3"></i>
-              <span>Pengaturan</span>
+              <span>Pengaturan Toko</span>
             </a>
           </li>
           <li>

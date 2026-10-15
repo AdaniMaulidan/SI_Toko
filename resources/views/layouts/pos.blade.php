@@ -93,8 +93,8 @@ $appName = config('app.name', 'SI Toko');
         
         <div class="d-flex align-items-center gap-3">
             <div class="d-none d-md-flex flex-column text-end me-2">
-                <span class="fw-medium text-heading">Admin Kasir</span>
-                <small class="text-muted" id="clock-display">00:00:00</small>
+                <span class="fw-medium text-heading">{{ auth()->user()->name ?? 'Kasir' }}</span>
+                <small class="text-muted"><span class="badge bg-label-primary px-1 py-0 me-1">{{ ucfirst(auth()->user()->role ?? 'Kasir') }}</span><span id="clock-display">00:00:00</span></small>
             </div>
             <div class="avatar avatar-online">
                 <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle">
