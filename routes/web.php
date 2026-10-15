@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
@@ -118,9 +119,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/debt/payments/{payment}/receipt/pdf', [CustomerController::class, 'downloadPaymentReceiptPdf'])->name('debt.receipt.pdf');
     });
 
-    // Pengeluaran
-    Route::prefix('expenses')->name('expenses.')->group(function () {
-        Route::get('/', fn() => view('expenses.index'))->name('index');
+    // Pengeluaran Operasional (Akses: Administrator - FASE 7.1)
+    Route::prefix('expenses')->name('expenses.')->middleware(['role:admin'])->group(function () {
+        Route::get('/',                  [ExpenseController::class, 'index'])->name('index');
+        Route::post('/',                 [ExpenseController::class, 'store'])->name('store');
+        Route::get('/{expense}/detail',  [ExpenseController::class, 'detail'])->name('detail');
+        Route::put('/{expense}',         [ExpenseController::class, 'update'])->name('update');
+        Route::delete('/{expense}',      [ExpenseController::class, 'destroy'])->name('destroy');
     });
 
     // Keuangan / Kas
