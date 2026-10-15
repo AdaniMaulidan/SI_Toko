@@ -331,4 +331,103 @@ class ReportTest extends TestCase
         $response->assertViewHas('netCashChange', 300000.0);
         $response->assertViewHas('closingBalance', 1300000.0);
     }
+
+    public function test_admin_can_export_sales_to_excel_and_pdf(): void
+    {
+        $sale = Sale::create([
+            'invoice_number' => 'INV-TEST-EXPORT',
+            'user_id'        => $this->cashier->id,
+            'customer_id'    => null,
+            'subtotal'       => 100000,
+            'tax'            => 0,
+            'discount'       => 0,
+            'total'          => 100000,
+            'payment_method' => 'cash',
+            'status'         => 'completed',
+        ]);
+
+        // Export Excel
+        $excelResponse = $this->actingAs($this->admin)->get(route('reports.sales.excel'));
+        $excelResponse->assertOk();
+        $this->assertStringContainsString('text/csv', $excelResponse->headers->get('content-type'));
+
+        // Export PDF
+        $pdfResponse = $this->actingAs($this->admin)->get(route('reports.sales.pdf'));
+        $pdfResponse->assertOk();
+        $this->assertStringContainsString('application/pdf', $pdfResponse->headers->get('content-type'));
+    }
+
+    public function test_admin_can_export_purchases_to_excel_and_pdf(): void
+    {
+        Purchase::create([
+            'invoice_number' => 'PO-TEST-EXPORT',
+            'supplier_id'    => $this->supplier->id,
+            'user_id'        => $this->admin->id,
+            'purchase_date'  => Carbon::now()->toDateString(),
+            'total_amount'   => 250000,
+            'paid_amount'    => 250000,
+            'payment_status' => 'paid',
+        ]);
+
+        $excelResponse = $this->actingAs($this->admin)->get(route('reports.purchases.excel'));
+        $excelResponse->assertOk();
+        $this->assertStringContainsString('text/csv', $excelResponse->headers->get('content-type'));
+
+        $pdfResponse = $this->actingAs($this->admin)->get(route('reports.purchases.pdf'));
+        $pdfResponse->assertOk();
+        $this->assertStringContainsString('application/pdf', $pdfResponse->headers->get('content-type'));
+    }
+
+    public function test_admin_can_export_stock_to_excel_and_pdf(): void
+    {
+        Product::create([
+            'category_id'   => $this->category->id,
+            'unit_id'       => $this->unit->id,
+            'barcode'       => 'BRG-STOCK-EXP',
+            'name'          => 'Produk Stok Export',
+            'cost_price'    => 10000,
+            'selling_price' => 15000,
+            'stock'         => 50,
+            'min_stock'     => 5,
+            'is_active'     => true,
+        ]);
+
+        $excelResponse = $this->actingAs($this->admin)->get(route('reports.stock.excel'));
+        $excelResponse->assertOk();
+        $this->assertStringContainsString('text/csv', $excelResponse->headers->get('content-type'));
+
+        $pdfResponse = $this->actingAs($this->admin)->get(route('reports.stock.pdf'));
+        $pdfResponse->assertOk();
+        $this->assertStringContainsString('application/pdf', $pdfResponse->headers->get('content-type'));
+    }
+
+    public function test_admin_can_export_products_and_profit_and_cash(): void
+    {
+        // Products
+        $excelProd = $this->actingAs($this->admin)->get(route('reports.products.excel'));
+        $excelProd->assertOk();
+        $pdfProd = $this->actingAs($this->admin)->get(route('reports.products.pdf'));
+        $pdfProd->assertOk();
+
+        // Profit
+        $excelProfit = $this->actingAs($this->admin)->get(route('reports.profit.excel'));
+        $excelProfit->assertOk();
+        $pdfProfit = $this->actingAs($this->admin)->get(route('reports.profit.pdf'));
+        $pdfProfit->assertOk();
+
+        // Cash
+        $excelCash = $this->actingAs($this->admin)->get(route('reports.cash.excel'));
+        $excelCash->assertOk();
+        $pdfCash = $this->actingAs($this->admin)->get(route('reports.cash.pdf'));
+        $pdfCash->assertOk();
+    }
+
+    public function test_cashier_cannot_export_reports(): void
+    {
+        $this->actingAs($this->cashier)->get(route('reports.sales.excel'))->assertForbidden();
+        $this->actingAs($this->cashier)->get(route('reports.sales.pdf'))->assertForbidden();
+        $this->actingAs($this->cashier)->get(route('reports.profit.excel'))->assertForbidden();
+        $this->actingAs($this->cashier)->get(route('reports.cash.pdf'))->assertForbidden();
+    }
 }
+

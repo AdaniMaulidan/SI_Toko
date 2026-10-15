@@ -10,10 +10,26 @@
         </h4>
         <small class="text-muted">Ringkasan saldo awal kas, penerimaan kas masuk, pengeluaran kas keluar, dan saldo akhir toko</small>
     </div>
-    <div class="d-print-none d-flex gap-2">
+    <div class="d-print-none d-flex gap-2 flex-wrap">
+        <a href="{{ route('reports.cash.excel', request()->all()) }}" class="btn btn-outline-success">
+            <i class="bx bxs-file-export me-1"></i> Excel (.csv)
+        </a>
+        <a href="{{ route('reports.cash.pdf', request()->all()) }}" class="btn btn-outline-danger" target="_blank">
+            <i class="bx bxs-file-pdf me-1"></i> Unduh PDF
+        </a>
         <button type="button" class="btn btn-primary" onclick="window.print()">
             <i class="bx bx-printer me-1"></i> Cetak Laporan
         </button>
+    </div>
+</div>
+
+<!-- Print-Only Formal Header -->
+<div class="d-none d-print-block mb-4 pb-2 border-bottom">
+    <div class="text-center">
+        <h3 class="fw-bold mb-1">{{ \App\Models\StoreSetting::getSettings()['store_name'] ?? 'SI TOKO' }}</h3>
+        <p class="mb-1 text-muted">{{ \App\Models\StoreSetting::getSettings()['address'] ?? '' }} | Telp: {{ \App\Models\StoreSetting::getSettings()['phone'] ?? '' }}</p>
+        <h4 class="fw-bold mt-3 mb-1 text-uppercase">LAPORAN ARUS KAS (CASH FLOW)</h4>
+        <small class="text-muted">Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</small>
     </div>
 </div>
 

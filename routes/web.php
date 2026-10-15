@@ -138,14 +138,31 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{cashFlow}', [FinanceController::class, 'destroy'])->name('destroy');
     });
 
-    // Modul Laporan Komprehensif (Akses: Administrator - FASE 8.2)
+    // Modul Laporan Komprehensif & Ekspor (Akses: Administrator - FASE 8.2 & 8.3)
     Route::prefix('reports')->name('reports.')->middleware(['role:admin'])->group(function () {
-        Route::get('/sales',     [ReportController::class, 'sales'])->name('sales');
-        Route::get('/purchases', [ReportController::class, 'purchases'])->name('purchases');
-        Route::get('/stock',     [ReportController::class, 'stock'])->name('stock');
-        Route::get('/products',  [ReportController::class, 'products'])->name('products');
-        Route::get('/profit',    [ReportController::class, 'profit'])->name('profit');
-        Route::get('/cash',      [ReportController::class, 'cash'])->name('cash');
+        Route::get('/sales',                [ReportController::class, 'sales'])->name('sales');
+        Route::get('/sales/export-excel',    [ReportController::class, 'exportSalesExcel'])->name('sales.excel');
+        Route::get('/sales/export-pdf',      [ReportController::class, 'exportSalesPdf'])->name('sales.pdf');
+
+        Route::get('/purchases',             [ReportController::class, 'purchases'])->name('purchases');
+        Route::get('/purchases/export-excel', [ReportController::class, 'exportPurchasesExcel'])->name('purchases.excel');
+        Route::get('/purchases/export-pdf',   [ReportController::class, 'exportPurchasesPdf'])->name('purchases.pdf');
+
+        Route::get('/stock',                 [ReportController::class, 'stock'])->name('stock');
+        Route::get('/stock/export-excel',    [ReportController::class, 'exportStockExcel'])->name('stock.excel');
+        Route::get('/stock/export-pdf',      [ReportController::class, 'exportStockPdf'])->name('stock.pdf');
+
+        Route::get('/products',              [ReportController::class, 'products'])->name('products');
+        Route::get('/products/export-excel', [ReportController::class, 'exportProductsExcel'])->name('products.excel');
+        Route::get('/products/export-pdf',   [ReportController::class, 'exportProductsPdf'])->name('products.pdf');
+
+        Route::get('/profit',                [ReportController::class, 'profit'])->name('profit');
+        Route::get('/profit/export-excel',   [ReportController::class, 'exportProfitExcel'])->name('profit.excel');
+        Route::get('/profit/export-pdf',     [ReportController::class, 'exportProfitPdf'])->name('profit.pdf');
+
+        Route::get('/cash',                  [ReportController::class, 'cash'])->name('cash');
+        Route::get('/cash/export-excel',     [ReportController::class, 'exportCashExcel'])->name('cash.excel');
+        Route::get('/cash/export-pdf',       [ReportController::class, 'exportCashPdf'])->name('cash.pdf');
     });
 
     // Manajemen Pengguna (Akses: Administrator / Owner)

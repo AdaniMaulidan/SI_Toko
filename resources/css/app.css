@@ -56,15 +56,49 @@
   max-height: 400px;
 }
 
-/* Struk / Receipt */
+/* Print Rules */
 @media print {
-  body * {
+  /* Sembunyikan navigasi, sidebar, header, footer Sneat */
+  .layout-menu,
+  .layout-navbar,
+  .footer,
+  .content-backdrop,
+  .d-print-none,
+  .btn,
+  .pagination {
+    display: none !important;
+  }
+
+  .layout-page {
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .content-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .container-xxl {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+
+  /* Khusus Struk Kasir jika ada #receipt-print */
+  body:has(#receipt-print) * {
     visibility: hidden;
   }
-  #receipt-print, #receipt-print * {
+  body:has(#receipt-print) #receipt-print,
+  body:has(#receipt-print) #receipt-print * {
     visibility: visible;
   }
-  #receipt-print {
+  body:has(#receipt-print) #receipt-print {
     position: absolute;
     left: 0;
     top: 0;
