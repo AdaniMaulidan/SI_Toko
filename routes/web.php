@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
@@ -128,9 +129,11 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{expense}',      [ExpenseController::class, 'destroy'])->name('destroy');
     });
 
-    // Keuangan / Kas
-    Route::prefix('finance')->name('finance.')->group(function () {
-        Route::get('/', fn() => view('finance.index'))->name('index');
+    // Keuangan & Kas (Akses: Administrator - FASE 7.2)
+    Route::prefix('finance')->name('finance.')->middleware(['role:admin'])->group(function () {
+        Route::get('/',              [FinanceController::class, 'index'])->name('index');
+        Route::post('/',             [FinanceController::class, 'store'])->name('store');
+        Route::delete('/{cashFlow}', [FinanceController::class, 'destroy'])->name('destroy');
     });
 
     // Laporan
