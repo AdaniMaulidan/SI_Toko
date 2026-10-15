@@ -11,6 +11,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
@@ -175,9 +176,11 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{user}',         [UserController::class, 'destroy'])->name('destroy');
     });
 
-    // Pengaturan
+    // Pengaturan Toko (Akses: Administrator - FASE 9.1)
     Route::prefix('settings')->name('settings.')->middleware(['role:admin'])->group(function () {
-        Route::get('/', fn() => view('settings.index'))->name('index');
+        Route::get('/',             [SettingController::class, 'index'])->name('index');
+        Route::put('/',             [SettingController::class, 'update'])->name('update');
+        Route::delete('/logo',      [SettingController::class, 'removeLogo'])->name('remove-logo');
     });
 
     // Backup & Restore

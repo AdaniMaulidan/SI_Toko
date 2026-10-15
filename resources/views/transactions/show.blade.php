@@ -271,15 +271,30 @@
                     </a>
                 </div>
 
+                @php
+                    $storeSetting = \App\Models\StoreSetting::getSettings();
+                @endphp
                 <!-- Actual Thermal Receipt Container -->
                 <div id="receipt-print-area" class="bg-white p-3 shadow-sm rounded" style="width: 270px; min-height: 380px; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000; line-height: 1.35;">
                     
                     <!-- Header -->
                     <div class="text-center mb-2">
-                        <h6 class="fw-bold mb-1" style="font-size: 14px; color: #000;">{{ config('app.name', 'SI TOKO RETAIL') }}</h6>
-                        <div style="font-size: 10px; line-height: 1.2;">
-                            Struk Penjualan Kasir<br>
-                            Telp Toko POS
+                        @if($storeSetting->logo && file_exists(public_path('storage/' . $storeSetting->logo)))
+                            <div class="mb-1">
+                                <img src="{{ asset('storage/' . $storeSetting->logo) }}" alt="Logo" style="max-height: 38px; max-width: 100px; object-fit: contain;">
+                            </div>
+                        @endif
+                        <h6 class="fw-bold mb-1 text-uppercase" style="font-size: 13px; color: #000;">{{ $storeSetting->store_name ?? 'SI TOKO RETAIL' }}</h6>
+                        <div style="font-size: 9.5px; line-height: 1.25;">
+                            @if($storeSetting->address)
+                                <div>{{ $storeSetting->address }}</div>
+                            @endif
+                            @if($storeSetting->phone)
+                                <div>Telp: {{ $storeSetting->phone }}</div>
+                            @endif
+                            @if($storeSetting->header_receipt)
+                                <div style="font-style: italic; margin-top: 1px;">{{ $storeSetting->header_receipt }}</div>
+                            @endif
                         </div>
                     </div>
 
@@ -328,9 +343,9 @@
                     </div>
 
                     <!-- Footer -->
-                    <div class="text-center mt-3" style="font-size: 10px;">
-                        <p class="mb-1">Terima kasih atas kunjungan Anda!</p>
-                        <p class="mb-0">Barang yang sudah dibeli<br>tidak dapat ditukar/dikembalikan.</p>
+                    <div class="text-center mt-3" style="font-size: 9.5px;">
+                        <p class="mb-1">{{ $storeSetting->footer_receipt ?: 'Terima kasih atas kunjungan Anda!' }}</p>
+                        <p class="mb-0 text-muted" style="font-size: 8.5px;">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
                     </div>
 
                 </div>

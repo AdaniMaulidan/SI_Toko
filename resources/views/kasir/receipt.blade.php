@@ -169,6 +169,11 @@
             
             <!-- Header Toko -->
             <div class="text-center">
+                @if($setting->logo && file_exists(public_path('storage/' . $setting->logo)))
+                    <div class="mb-1">
+                        <img src="{{ asset('storage/' . $setting->logo) }}" alt="Logo" style="max-height: 42px; max-width: 120px; object-fit: contain;">
+                    </div>
+                @endif
                 <div class="fw-bold fs-6 text-uppercase" style="letter-spacing: 0.5px;">{{ $setting->store_name ?? 'SI TOKO RETAIL' }}</div>
                 @if($setting->address)
                     <div style="font-size: 0.85em;">{{ $setting->address }}</div>
