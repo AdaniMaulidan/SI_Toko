@@ -97,7 +97,7 @@ $appName = config('app.name', 'SI Toko');
                 <small class="text-muted"><span class="badge bg-label-primary px-1 py-0 me-1">{{ ucfirst(auth()->user()->role ?? 'Kasir') }}</span><span id="clock-display">00:00:00</span></small>
             </div>
             <div class="avatar avatar-online">
-                <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle">
+                <img src="{{ auth()->user()?->image_url ?? asset('assets/img/avatars/1.png') }}" alt class="w-px-40 h-px-40 rounded-circle object-fit-cover border">
             </div>
         </div>
     </header>

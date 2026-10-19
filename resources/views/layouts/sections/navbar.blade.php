@@ -122,23 +122,23 @@
         <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);"
           data-bs-toggle="dropdown">
           <div class="avatar avatar-online">
-            <img src="{{ asset('assets/img/avatars/1.png') }}" alt="User Avatar"
-              class="w-px-40 h-auto rounded-circle" />
+            <img src="{{ auth()->user()?->image_url ?? asset('assets/img/avatars/1.png') }}" alt="User Avatar"
+              class="w-px-40 h-px-40 rounded-circle object-fit-cover border" />
           </div>
         </a>
         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
           <li>
-            <a class="dropdown-item" href="{{ route('settings.index') }}">
-              <div class="d-flex">
+            <a class="dropdown-item" href="{{ route('profile.index') }}">
+              <div class="d-flex align-items-center">
                 <div class="flex-shrink-0 me-3">
                   <div class="avatar avatar-online">
-                    <img src="{{ asset('assets/img/avatars/1.png') }}" alt
-                      class="w-px-40 h-auto rounded-circle" />
+                    <img src="{{ auth()->user()?->image_url ?? asset('assets/img/avatars/1.png') }}" alt="User Avatar"
+                      class="w-px-40 h-px-40 rounded-circle object-fit-cover border" />
                   </div>
                 </div>
                 <div class="flex-grow-1">
-                  <h6 class="mb-0">{{ auth()->user()->name ?? "Admin" }}</h6>
-                  <small class="text-muted">{{ ucfirst(auth()->user()->role ?? "Administrator") }}</small>
+                  <h6 class="mb-0 fw-semibold">{{ auth()->user()->name ?? "Pengguna" }}</h6>
+                  <small class="text-muted">{{ ucfirst(auth()->user()->role ?? "admin") }}</small>
                 </div>
               </div>
             </a>
@@ -147,11 +147,19 @@
             <div class="dropdown-divider my-1"></div>
           </li>
           <li>
+            <a class="dropdown-item" href="{{ route('profile.index') }}">
+              <i class="icon-base bx bx-user icon-md me-3"></i>
+              <span>Profil Saya</span>
+            </a>
+          </li>
+          @if(auth()->user()?->isAdmin())
+          <li>
             <a class="dropdown-item" href="{{ route('settings.index') }}">
               <i class="icon-base bx bx-cog icon-md me-3"></i>
               <span>Pengaturan Toko</span>
             </a>
           </li>
+          @endif
           <li>
             <div class="dropdown-divider my-1"></div>
           </li>

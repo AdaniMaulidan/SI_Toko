@@ -12,6 +12,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
@@ -33,8 +34,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/login',                [AuthController::class, 'login'])->name('login.submit');
     Route::get('/auth/login',            fn() => redirect()->route('login'))->name('auth.login');
     Route::post('/auth/login',           [AuthController::class, 'login'])->name('auth.login.submit');
-    Route::get('/auth/forgot-password',  fn() => view('auth.forgot-password'))->name('auth.forgot-password');
-    Route::post('/auth/forgot-password', fn() => back()->with('status', 'Link reset password telah dikirim ke email Anda.'))->name('auth.forgot-password.submit');
 });
 
 Route::post('/logout',      [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -46,6 +45,14 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard (FASE 8.1)
     Route::get('/', fn() => redirect()->route('dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profil Akun & Foto Profil (Akses: Semua Pengguna Terautentikasi)
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/',             [ProfileController::class, 'index'])->name('index');
+        Route::put('/',             [ProfileController::class, 'update'])->name('update');
+        Route::delete('/image',     [ProfileController::class, 'removeImage'])->name('remove-image');
+        Route::put('/password',     [ProfileController::class, 'updatePassword'])->name('update-password');
+    });
 
     // Kasir / POS (Akses: Administrator & Kasir)
     Route::middleware(['role:admin,cashier'])->group(function () {

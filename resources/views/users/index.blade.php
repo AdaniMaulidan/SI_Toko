@@ -168,9 +168,13 @@
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="avatar avatar-sm me-3">
-                                <span class="avatar-initial rounded-circle bg-label-{{ $user->isAdmin() ? 'danger' : ($user->isCashier() ? 'info' : 'warning') }} fw-bold">
-                                    {{ strtoupper(substr($user->name, 0, 2)) }}
-                                </span>
+                                @if($user->hasCustomImage())
+                                    <img src="{{ $user->image_url }}" alt="{{ $user->name }}" class="rounded-circle w-100 h-100 object-fit-cover border">
+                                @else
+                                    <span class="avatar-initial rounded-circle bg-label-{{ $user->isAdmin() ? 'danger' : ($user->isCashier() ? 'info' : 'warning') }} fw-bold">
+                                        {{ strtoupper(substr($user->name, 0, 2)) }}
+                                    </span>
+                                @endif
                             </div>
                             <div>
                                 <h6 class="mb-0 fw-semibold">{{ $user->name }}
@@ -214,7 +218,7 @@
                                 <a class="dropdown-item" href="javascript:void(0);" 
                                    data-bs-toggle="modal" 
                                    data-bs-target="#editUserModal"
-                                   onclick="populateEditUserModal('{{ $user->id }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ $user->phone }}', '{{ $user->role }}', {{ $user->is_active ? 'true' : 'false' }}, {{ Auth::id() === $user->id ? 'true' : 'false' }})">
+                                   onclick="populateEditUserModal('{{ $user->id }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ $user->phone }}', '{{ $user->role }}', {{ $user->is_active ? 'true' : 'false' }}, {{ Auth::id() === $user->id ? 'true' : 'false' }}, '{{ $user->image_url }}', {{ $user->hasCustomImage() ? 'true' : 'false' }})">
                                     <i class="bx bx-edit-alt me-2 text-primary"></i> Edit Profil
                                 </a>
 
@@ -292,10 +296,22 @@
                 <h5 class="modal-title fw-bold"><i class="bx bx-user-plus me-1 text-primary"></i> Tambah Pengguna Baru</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('users.store') }}" method="POST">
+            <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body py-3">
                     <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Foto Profil (Opsional)</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-md border rounded-circle overflow-hidden bg-light" style="width: 52px; height: 52px;">
+                                    <img id="preview_add_avatar" src="{{ asset('assets/img/avatars/1.png') }}" alt="Preview" class="w-100 h-100 object-fit-cover">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <input type="file" name="image" class="form-control form-control-sm" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="previewAvatar(this, 'preview_add_avatar')">
+                                    <small class="text-muted d-block mt-1">Format: JPG, PNG, WEBP (Maks. 2MB)</small>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" required placeholder="cth. Budi Santoso" value="{{ old('name') }}">
@@ -345,11 +361,31 @@
                 <h5 class="modal-title fw-bold"><i class="bx bx-edit-alt me-1 text-primary"></i> Edit Profil Pengguna</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editUserForm" method="POST">
+            <form id="editUserForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="modal-body py-3">
                     <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Foto Profil</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-md border rounded-circle overflow-hidden bg-light" style="width: 52px; height: 52px;">
+                                    <img id="preview_edit_avatar" src="{{ asset('assets/img/avatars/1.png') }}" alt="Preview" class="w-100 h-100 object-fit-cover">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <input type="file" name="image" class="form-control form-control-sm" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="previewAvatar(this, 'preview_edit_avatar')">
+                                    <div id="remove_image_container" class="mt-2 d-none">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="remove_image" id="remove_image_check" value="1">
+                                            <label class="form-check-label text-danger small" for="remove_image_check">
+                                                <i class="bx bx-trash me-1"></i> Hapus Foto Profil Saat Ini
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Format: JPG, PNG, WEBP (Maks. 2MB)</small>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
                             <input type="text" name="name" id="edit_name" class="form-control" required>
@@ -424,7 +460,7 @@
 
 @section('page-script')
 <script>
-    function populateEditUserModal(id, name, email, phone, role, isActive, isSelf) {
+    function populateEditUserModal(id, name, email, phone, role, isActive, isSelf, imageUrl, hasCustomImage) {
         document.getElementById('editUserForm').action = '/users/' + id;
         document.getElementById('edit_name').value = name;
         document.getElementById('edit_email').value = email;
@@ -435,6 +471,21 @@
         
         const statusCheckbox = document.getElementById('edit_status');
         statusCheckbox.checked = isActive;
+
+        // Foto profil
+        const previewAvatar = document.getElementById('preview_edit_avatar');
+        if (previewAvatar) previewAvatar.src = imageUrl || '/assets/img/avatars/1.png';
+
+        const removeContainer = document.getElementById('remove_image_container');
+        const removeCheck = document.getElementById('remove_image_check');
+        if (removeCheck) removeCheck.checked = false;
+        if (removeContainer) {
+            if (hasCustomImage) {
+                removeContainer.classList.remove('d-none');
+            } else {
+                removeContainer.classList.add('d-none');
+            }
+        }
 
         // Proteksi jika mengedit akun sendiri
         const selfNote = document.getElementById('self_role_note');
@@ -447,6 +498,17 @@
             roleSelect.removeAttribute('disabled');
             selfNote.classList.add('d-none');
             statusContainer.classList.remove('d-none');
+        }
+    }
+
+    function previewAvatar(input, previewId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                if (preview) preview.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
         }
     }
 
